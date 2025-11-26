@@ -4,9 +4,10 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import Feather from "react-native-vector-icons/Feather";
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Slider from "@react-native-community/slider";
-import TrackPlayer, { useProgress } from 'react-native-track-player';
+import TrackPlayer, { useProgress, Event, State, useTrackPlayerEvents } from 'react-native-track-player';
 import { useAppSelector } from "../../redux/hooks";
 import { DatabaseService } from "../../services/database";
+import { DownloadService } from "../../services/DownloadService";
 
 interface Props {
   navigation: any;
@@ -25,6 +26,15 @@ export default function PlayerScreen({ navigation, route }: Props) {
 
   // Use TrackPlayer's built-in progress hook
   const { position, duration } = useProgress();
+
+  // Listen to playback state changes to sync UI with actual player state
+  useTrackPlayerEvents([Event.PlaybackState], async (event) => {
+    if (event.type === Event.PlaybackState) {
+      const state = event.state;
+      console.log('📻 Playback state changed:', state);
+      setIsPlaying(state === State.Playing);
+    }
+  });
 
   const current = episodes[currentIndex] || {};
 
@@ -94,12 +104,33 @@ export default function PlayerScreen({ navigation, route }: Props) {
         // Always reset and add new tracks
         await TP.reset();
 
-        const tracks = episodes.map((ep, i) => ({
-          id: i,
-          url: ep.audioUrl,
-          title: ep.title,
-          artist: ep.pubDate || 'Unknown',
-          artwork: ep.image,
+        // Check for downloaded episodes and use local files when available
+        const tracks = await Promise.all(episodes.map(async (ep, i) => {
+          let audioSource = ep.audioUrl; // Default to streaming URL
+
+          // Check if episode is downloaded
+          if (user?.id) {
+            const safeEpisodeId = ep.audioUrl?.split('/').pop()?.split('?')[0];
+            if (safeEpisodeId) {
+              try {
+                const downloaded = await DownloadService.getDownloadedEpisode(user.id, safeEpisodeId);
+                if (downloaded?.local_path) {
+                  audioSource = downloaded.local_path; // Use local file
+                  console.log('🎵 Using offline file for:', ep.title);
+                }
+              } catch (e) {
+                console.warn('Error checking download status:', e);
+              }
+            }
+          }
+
+          return {
+            id: i,
+            url: audioSource, // Either local path or remote URL
+            title: ep.title,
+            artist: ep.pubDate || 'Unknown',
+            artwork: ep.image,
+          };
         }));
 
         if (tracks.length === 0) return;
@@ -111,8 +142,14 @@ export default function PlayerScreen({ navigation, route }: Props) {
         } else {
           setCurrentIndex(startIndex);
         }
-        if (TP.play) await TP.play();
-        if (mounted) setIsPlaying(true);
+        
+        // Start playback
+        console.log('🎵 Starting playback...');
+        if (TP.play) {
+          await TP.play();
+          console.log('✅ Playback started successfully');
+        }
+        // Note: isPlaying state will be updated by the event listener
       } catch (e) {
         console.warn('TrackPlayer setup failed:', e);
         Alert.alert('Playback error', 'Unable to start audio player.');
@@ -148,29 +185,19 @@ export default function PlayerScreen({ navigation, route }: Props) {
 
   const togglePlay = async () => {
     try {
-      const TP: any = TrackPlayer;
-      if (TP.getState) {
-        const state = await TP.getState();
-        const isNowPlaying = state === TP.STATE_PLAYING || state === 'playing';
-        if (isNowPlaying) {
-          if (TP.pause) await TP.pause();
-          setIsPlaying(false);
-        } else {
-          if (TP.play) await TP.play();
-          setIsPlaying(true);
-        }
+      console.log('🎮 Toggle play - current state:', isPlaying);
+      
+      if (isPlaying) {
+        console.log('⏸️ Pausing...');
+        await TrackPlayer.pause();
       } else {
-        // Fallback when native getState is not available: toggle based on local state
-        if (isPlaying) {
-          if (TP.pause) await TP.pause();
-          setIsPlaying(false);
-        } else {
-          if (TP.play) await TP.play();
-          setIsPlaying(true);
-        }
+        console.log('▶️ Playing...');
+        await TrackPlayer.play();
       }
+      // Note: isPlaying state will be updated by the event listener
     } catch (e) {
-      console.warn(e);
+      console.error('❌ Toggle play error:', e);
+      Alert.alert('Playback Error', 'Unable to toggle playback');
     }
   };
 

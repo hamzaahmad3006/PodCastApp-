@@ -77,8 +77,6 @@ export default function EditProfile({ navigation }: Props) {
 
     // Get avatar URL from either direct property or user_metadata (for Google OAuth)
     const avatarUrl = user?.avatar_url || user?.user_metadata?.avatar_url;
-    console.log("Avatar URL:", avatarUrl);
-
     const displayName = user?.display_name || user?.user_metadata?.display_name || user?.name || user?.email;
 
     // Handle Image Selection

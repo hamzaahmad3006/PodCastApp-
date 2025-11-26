@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { View, Text, Image, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator, Alert } from "react-native";
+import { Circle, Svg } from "react-native-svg";
 import FontAwesome6 from "react-native-vector-icons/FontAwesome6";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import Feather from "react-native-vector-icons/Feather";
@@ -18,12 +19,14 @@ interface Episode {
 }
 
 // Memoized Episode Item Component for better performance
-const EpisodeItem = React.memo(({ item, index, onPlay, onDownload, downloading }: {
+const EpisodeItem = React.memo(({ item, index, onPlay, onDownload, downloading, downloadProgress, isDownloaded }: {
   item: Episode;
   index: number;
   onPlay: (index: number) => void;
   onDownload: (episode: Episode) => void;
   downloading: boolean;
+  downloadProgress: number;
+  isDownloaded: boolean;
 }) => (
   <View style={styles.podcastItem}>
     <Image source={{ uri: item.image }} style={styles.podcastImage} />
@@ -42,13 +45,47 @@ const EpisodeItem = React.memo(({ item, index, onPlay, onDownload, downloading }
         </TouchableOpacity>
 
         <View style={styles.actionIconsRow}>
-          <TouchableOpacity onPress={() => onDownload(item)} disabled={downloading}>
-            <Feather
-              name={downloading ? "loader" : "download"}
-              size={20}
-              style={[styles.actionIcon, downloading && { opacity: 0.5 }]}
-            />
-          </TouchableOpacity>
+          {isDownloaded ? (
+            <View style={styles.downloadedContainer}>
+              <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
+            </View>
+          ) : (
+            <TouchableOpacity onPress={() => onDownload(item)} disabled={downloading}>
+              {downloading ? (
+                <View style={styles.progressContainer}>
+                  <Svg width="24" height="24" viewBox="0 0 24 24">
+                    <Circle
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="#E0E0E0"
+                      strokeWidth="2"
+                      fill="none"
+                    />
+                    <Circle
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="#4CAF50"
+                      strokeWidth="2"
+                      fill="none"
+                      strokeDasharray={`${2 * Math.PI * 10}`}
+                      strokeDashoffset={`${2 * Math.PI * 10 * (1 - downloadProgress)}`}
+                      strokeLinecap="round"
+                      transform="rotate(-90 12 12)"
+                    />
+                  </Svg>
+                  <Text style={styles.progressText}>{Math.round(downloadProgress * 100)}%</Text>
+                </View>
+              ) : (
+                <Feather
+                  name="download"
+                  size={20}
+                  style={styles.actionIcon}
+                />
+              )}
+            </TouchableOpacity>
+          )}
           <Feather name="share-2" size={20} style={styles.actionIcon} />
           <Feather name="more-vertical" size={20} style={styles.actionIcon} />
         </View>
@@ -64,6 +101,8 @@ export default function Home() {
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [loading, setLoading] = useState(true);
   const [downloadingEpisodes, setDownloadingEpisodes] = useState<Set<string>>(new Set());
+  const [downloadProgress, setDownloadProgress] = useState<Map<string, number>>(new Map());
+  const [downloadedEpisodes, setDownloadedEpisodes] = useState<Set<string>>(new Set());
 
   const RSS_URL = "https://podcasts.files.bbci.co.uk/p01plr2p.rss";
 
@@ -71,7 +110,19 @@ export default function Home() {
 
   useEffect(() => {
     fetchEpisodes();
+    loadDownloadedEpisodes();
   }, []);
+
+  const loadDownloadedEpisodes = async () => {
+    if (!user?.id) return;
+    try {
+      const downloaded = await DownloadService.getDownloadedEpisodes(user.id);
+      const downloadedIds = new Set(downloaded.map((d: any) => d.episode_id));
+      setDownloadedEpisodes(downloadedIds);
+    } catch (e) {
+      console.log('Error loading downloaded episodes:', e);
+    }
+  };
 
   const fetchEpisodes = async () => {
     try {
@@ -149,27 +200,49 @@ export default function Home() {
     const episodeId = episode.audioUrl;
     setDownloadingEpisodes(prev => new Set(prev).add(episodeId));
 
+    // Extract a safe ID for the download service (must not be a URL)
+    // We take the last part of the URL and remove any query parameters
+    const safeEpisodeId = episode.audioUrl.split('/').pop()?.split('?')[0] || `ep_${Date.now()}`;
+
     try {
+      // Ensure episode exists in database BEFORE downloading
+      await DatabaseService.upsertEpisode({
+        ...episode,
+        id: safeEpisodeId
+      });
+
       // Download the file
       await DownloadService.downloadAudio(
+        user.id,
+        safeEpisodeId,
         episode.audioUrl,
         episode.title,
         (progress) => {
-          console.log(`Download progress: ${(progress.progress * 100).toFixed(0)}%`);
+          const percent = progress.progress;
+          console.log(`Download progress: ${(percent * 100).toFixed(0)}%`);
+          setDownloadProgress(prev => new Map(prev).set(episodeId, percent));
         }
       );
 
-      // Save to database with 'downloaded' status
-      await DatabaseService.addToLibrary(user.id, {
-        id: episode.audioUrl,
+      // Cache episode metadata for offline access
+      await DownloadService.cacheEpisodeMetadata(safeEpisodeId, {
         title: episode.title,
         description: episode.description,
-        audioUrl: episode.audioUrl,
-        image: episode.image,
-        pubDate: episode.pubDate,
+        image_url: episode.image,
+        pub_date: episode.pubDate,
+        audio_url: episode.audioUrl,
+      });
+
+      // Save to database with 'downloaded' status
+      await DatabaseService.addToLibrary(user.id, {
+        ...episode,
+        id: safeEpisodeId
       }, 'downloaded');
 
       Alert.alert("Success", "Episode downloaded successfully!");
+
+      // Mark as downloaded
+      setDownloadedEpisodes(prev => new Set(prev).add(episodeId));
     } catch (error: any) {
       console.error("Download error:", error);
       Alert.alert("Download Failed", error.message || "Failed to download episode");
@@ -178,6 +251,12 @@ export default function Home() {
         const newSet = new Set(prev);
         newSet.delete(episodeId);
         return newSet;
+      });
+      // Clear progress
+      setDownloadProgress(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(episodeId);
+        return newMap;
       });
     }
   }, [user]);
@@ -190,8 +269,10 @@ export default function Home() {
       onPlay={handlePlay}
       onDownload={handleDownload}
       downloading={downloadingEpisodes.has(item.audioUrl || '')}
+      downloadProgress={downloadProgress.get(item.audioUrl || '') || 0}
+      isDownloaded={downloadedEpisodes.has(item.audioUrl?.split('/').pop()?.split('?')[0] || '')}
     />
-  ), [handlePlay, handleDownload, downloadingEpisodes]);
+  ), [handlePlay, handleDownload, downloadingEpisodes, downloadProgress, downloadedEpisodes]);
 
   // Get item layout for better scrolling performance
   const getItemLayout = useCallback((data: any, index: number) => ({
@@ -338,4 +419,21 @@ const styles = StyleSheet.create({
   },
   playBtnText: { color: "#fff", fontWeight: "600" },
   actionIcon: { marginLeft: 15, color: "#000" },
+  progressContainer: {
+    position: "relative",
+    width: 24,
+    height: 24,
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: 15,
+  },
+  progressText: {
+    position: "absolute",
+    fontSize: 8,
+    fontWeight: "700",
+    color: "#4CAF50",
+  },
+  downloadedContainer: {
+    marginLeft: 15,
+  },
 });

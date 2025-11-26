@@ -153,7 +153,7 @@ export const DatabaseService = {
         const { error } = await supabase
             .from('episodes')
             .upsert({
-                id: episode.audioUrl || episode.id, // Use audioUrl as ID if no GUID
+                id: episode.id || episode.audioUrl, // Prefer explicit ID (e.g. safe filename)
                 title: episode.title,
                 description: episode.description,
                 audio_url: episode.audioUrl,
@@ -181,7 +181,7 @@ export const DatabaseService = {
                 .from('user_library')
                 .upsert({
                     user_id: userId,
-                    episode_id: episode.audioUrl || episode.id,
+                    episode_id: episode.id || episode.audioUrl,
                     status: status,
                 }, { onConflict: 'user_id, episode_id, status' });
 
