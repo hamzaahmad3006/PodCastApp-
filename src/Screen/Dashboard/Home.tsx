@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigation } from "@react-navigation/native";
-import { View, Text, Image, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator, Alert } from "react-native";
+import { View, Text, Image, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator, Alert, ScrollView } from "react-native";
 import { Circle, Svg } from "react-native-svg";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import Feather from "react-native-vector-icons/Feather";
@@ -35,6 +35,11 @@ export default function Home() {
 
   const navigation = useNavigation<any>();
 
+  const trendingimages = [
+    require("../../assets/trending1.jpg"),
+    require("../../assets/trending2.jpg"),
+
+  ];
   useEffect(() => {
     fetchEpisodes();
     loadDownloadedEpisodes();
@@ -159,9 +164,8 @@ export default function Home() {
   const renderEpisode = useCallback(({ item, index }: { item: Episode; index: number }) => (
     <PodcastCard
       item={item}
-      index={index}
       onPlay={() => handlePlay(index)}
-      onDownload={handleDownload}
+      onDownload={() => handleDownload(item)}
       downloading={downloadingEpisodes.has(item.audioUrl || '')}
       downloadProgress={downloadProgress.get(item.audioUrl || '') || 0}
       isDownloaded={downloadedEpisodes.has(item.audioUrl?.split('/').pop()?.split('?')[0] || '')}
@@ -220,7 +224,7 @@ export default function Home() {
               </TouchableOpacity>
             </View>
 
-            {episodes.length > 0 && (
+            {/* {episodes.length > 0 && (
               <View style={styles.banner}>
                 <Image source={{ uri: episodes[0].image }} style={styles.bannerImage} />
                 <View style={styles.bannerContentRow}>
@@ -239,10 +243,87 @@ export default function Home() {
                   </TouchableOpacity>
                 </View>
               </View>
+            )} */}
+            {/* {episodes.length > 0 && (
+              <View style={{ marginTop: 25 }}>
+                <FlatList
+                  data={episodes.slice(0, 3)} // last 3 episodes
+                  keyExtractor={(item) => item.audioUrl || item.title}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ paddingLeft: 20, paddingRight: 10 }}
+                  renderItem={({ item, index }) => (
+                    <View style={styles.bannerHorizontalItem}>
+                      <Image source={{ uri: item.image }} style={styles.bannerImageHorizontal} />
+                      <View style={styles.bannerTextHorizontal}>
+                        <Text style={styles.bannerTitleHorizontal} numberOfLines={1}>
+                          {item.title}
+                        </Text>
+                        <Text style={styles.bannerSubtitleHorizontal}>
+                          Latest Episode
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+                />
+              </View>
+            )} */}
+            {episodes.length > 0 && (
+              <View style={{ marginTop: 25 }}>
+                <FlatList
+                  data={episodes.slice(0, 3)}
+                  keyExtractor={(item, idx) => item.audioUrl || String(idx)}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  // contentContainerStyle={{ paddingLeft: 20, paddingRight: 10 }}
+                  renderItem={({ item, index }) => (
+                    <View style={[styles.banner, { width: 285, marginRight: 15 }]}>
+                      <Image source={{ uri: item.image }} style={[styles.bannerImage, { width: 285, height: 150 }]} />
+                      <View style={styles.bannerContentRow}>
+                        <View style={styles.bannerText}>
+                          <Text style={styles.bannerCategory}>Tech Podcast</Text>
+                          <Text style={styles.bannerTitle} numberOfLines={2}>{item.title}</Text>
+                          <Text style={styles.bannerSubtitle}>Latest Episode</Text>
+                        </View>
+                        <TouchableOpacity
+                          style={styles.playNowBtn}
+                          onPress={() => navigation.navigate("Player", { episodes, index })}
+                        >
+                          <Text style={styles.playNowText}>Play Now</Text>
+                          <Ionicons name="play" size={16} color="#000" />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  )}
+                />
+              </View>
             )}
 
+
+
+            {/* Top Trending Section */}
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>New Episodes</Text>
+              <Text style={styles.sectionTitle}>Top Trending #10</Text>
+              <TouchableOpacity onPress={() => navigation.navigate("AllEpisodes", { episodes })}>
+                <Text style={styles.sectionSeeAll}>See all</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Trending Horizontal Scroll */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
+
+              {trendingimages.map((img, index) => (
+                <Image
+                  key={index}
+                  source={img}
+                  style={styles.trendingImage}
+                />
+              ))}
+            </ScrollView>
+
+
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>New Updates</Text>
               <TouchableOpacity onPress={() => navigation.navigate("AllEpisodes", { episodes })}>
                 <Text style={styles.sectionSeeAll}>See all</Text>
               </TouchableOpacity>
@@ -361,4 +442,36 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "bold",
   },
+  /* Horizontal Scroll */
+  horizontalScroll: { marginTop: 15 },
+  trendingImage: {
+    width: 145,
+    height: 175,
+    borderRadius: 16,
+    marginRight: 15
+  },
+
+  /* Banner Horizontal Scroll */
+  bannerHorizontalItem: {
+    width: 200,
+    marginRight: 15,
+    borderRadius: 16,
+    overflow: "hidden",
+    backgroundColor: "#000",
+  },
+  bannerImageHorizontal: {
+    width: "100%",
+    height: 120,
+  },
+  bannerTextHorizontal: {
+    position: "absolute",
+    bottom: 0,
+    left: 10,
+    right: 10,
+    padding: 8,
+  },
+  bannerTitleHorizontal: { color: "#fff", fontWeight: "700", fontSize: 14 },
+  bannerSubtitleHorizontal: { color: "#fff", fontSize: 12 },
+
 });
+

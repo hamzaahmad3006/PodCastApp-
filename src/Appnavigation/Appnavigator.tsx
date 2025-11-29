@@ -51,23 +51,43 @@ const MainStack = createNativeStackNavigator<MainStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
 
 // ----- Tab Icon Helper -----
-const TabIcon = (iconName: string) => ({ color, size }: { color: string; size: number }) => (
-  <Ionicons name={iconName} color={color} size={size} />
-);
+const getTabIcon = (routeName: string, focused: boolean, color: string, size: number) => {
+  let iconName = "";
+
+  switch (routeName) {
+    case "Home":
+      iconName = focused ? "home" : "home-outline";
+      break;
+    case "Search":
+      iconName = focused ? "search" : "search-outline";
+      break;
+    case "Library":
+      iconName = focused ? "document-text" : "document-text-outline";
+      break;
+    case "Profile":
+      iconName = focused ? "person" : "person-outline";
+      break;
+    default:
+      iconName = "help-circle-outline";
+  }
+
+  return <Ionicons name={iconName} color={color} size={size} />;
+};
 
 // Only 4 tabs - no hidden screens
 const MyTabs: React.FC = () => (
   <Tab.Navigator
-    screenOptions={{
+    screenOptions={({ route }) => ({
       headerShown: false,
       tabBarActiveTintColor: "#A637FF",
       tabBarInactiveTintColor: "gray",
-    }}
+      tabBarIcon: ({ focused, color, size }) => getTabIcon(route.name, focused, color, size),
+    })}
   >
-    <Tab.Screen name="Home" component={Home} options={{ tabBarIcon: TabIcon("home") }} />
-    <Tab.Screen name="Search" component={Search} options={{ tabBarIcon: TabIcon("search") }} />
-    <Tab.Screen name="Library" component={MyLibrary} options={{ tabBarIcon: TabIcon("library") }} />
-    <Tab.Screen name="Profile" component={Profile} options={{ tabBarIcon: TabIcon("person") }} />
+    <Tab.Screen name="Home" component={Home} />
+    <Tab.Screen name="Search" component={Search} />
+    <Tab.Screen name="Library" component={MyLibrary} />
+    <Tab.Screen name="Profile" component={Profile} />
   </Tab.Navigator>
 );
 

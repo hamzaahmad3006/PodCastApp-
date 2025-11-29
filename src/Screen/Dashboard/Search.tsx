@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigation } from "@react-navigation/native";
-import { View, Text, Image, TouchableOpacity, FlatList, StyleSheet, TextInput, ActivityIndicator, Alert } from "react-native";
+import { View, Text, Image, TouchableOpacity, FlatList, StyleSheet, TextInput, ActivityIndicator, Alert, Dimensions, ScrollView } from "react-native";
 import { Circle, Svg } from "react-native-svg";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import Feather from "react-native-vector-icons/Feather";
@@ -10,6 +10,7 @@ import { DownloadService } from "../../services/DownloadService";
 import { DatabaseService } from "../../services/database";
 import { SUPABASE_ANON_KEY } from "@env";
 import { SafeAreaView } from "react-native-safe-area-context";
+import PodcastCard from "../../components/PodCastCard";
 
 interface Episode {
   title: string;
@@ -19,81 +20,32 @@ interface Episode {
   image: string;
 }
 
-// Memoized Episode Item Component for better performance
-const EpisodeItem = React.memo(({ item, index, onPlay, onDownload, downloading, downloadProgress, isDownloaded }: {
-  item: Episode;
-  index: number;
-  onPlay: (index: number) => void;
-  onDownload: (episode: Episode) => void;
-  downloading: boolean;
-  downloadProgress: number;
-  isDownloaded: boolean;
-}) => (
-  <View style={styles.podcastItem}>
-    <Image source={{ uri: item.image }} style={styles.podcastImage} />
-
-    <View style={styles.podcastContent}>
-      <Text style={styles.podcastTitle} numberOfLines={2}>{item.title}</Text>
-      <Text style={styles.podcastSpeaker}>{item.pubDate}</Text>
-
-      <View style={styles.podcastActions}>
-        <TouchableOpacity
-          style={styles.playBtn}
-          onPress={() => onPlay(index)}
-        >
-          <Ionicons name="play" size={16} color="#fff" />
-          <Text style={styles.playBtnText}>Play</Text>
-        </TouchableOpacity>
-
-        <View style={styles.actionIconsRow}>
-          {isDownloaded ? (
-            <View style={styles.downloadedContainer}>
-              <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
-            </View>
-          ) : (
-            <TouchableOpacity onPress={() => onDownload(item)} disabled={downloading}>
-              {downloading ? (
-                <View style={styles.progressContainer}>
-                  <Svg width="24" height="24" viewBox="0 0 24 24">
-                    <Circle
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="#E0E0E0"
-                      strokeWidth="2"
-                      fill="none"
-                    />
-                    <Circle
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="#4CAF50"
-                      strokeWidth="2"
-                      fill="none"
-                      strokeDasharray={`${2 * Math.PI * 10}`}
-                      strokeDashoffset={`${2 * Math.PI * 10 * (1 - downloadProgress)}`}
-                      strokeLinecap="round"
-                      transform="rotate(-90 12 12)"
-                    />
-                  </Svg>
-                  <Text style={styles.progressText}>{Math.round(downloadProgress * 100)}%</Text>
-                </View>
-              ) : (
-                <Feather
-                  name="download"
-                  size={20}
-                  style={styles.actionIcon}
-                />
-              )}
-            </TouchableOpacity>
-          )}
-          <Feather name="share-2" size={20} style={styles.actionIcon} />
-          <Feather name="more-vertical" size={20} style={styles.actionIcon} />
-        </View>
-      </View>
-    </View>
-  </View>
-));
+// const podcasts = [
+//   {
+//     id: 1,
+//     title: 'Mind of an Entrepreneur',
+//     category: 'Business',
+//     image: require('../../assets/search1.png'),
+//   },
+//   {
+//     id: 2,
+//     title: 'Unravelling the Mind',
+//     category: 'Healthy Lifestyle',
+//     image: require('../../assets/search2.png'),
+//   },
+//   {
+//     id: 3,
+//     title: 'A Tale of Writer',
+//     category: 'Educational',
+//     image: require('../../assets/search3.png'),
+//   },
+//   {
+//     id: 4,
+//     title: 'Addiction to Social!',
+//     category: 'Sociology',
+//     image: require('../../assets/search4.png'),
+//   },
+// ];
 
 export default function Search() {
   const { user } = useAppSelector((state: any) => state.auth);
@@ -245,11 +197,10 @@ export default function Search() {
   const renderEpisode = useCallback(({ item, index }: { item: Episode; index: number }) => {
     const safeEpisodeId = item.audioUrl?.split('/').pop()?.split('?')[0] || '';
     return (
-      <EpisodeItem
+      <PodcastCard
         item={item}
-        index={index}
-        onPlay={handlePlay}
-        onDownload={handleDownload}
+        onPlay={() => handlePlay(index)}
+        onDownload={() => handleDownload(item)}
         downloading={downloadingEpisodes.has(item.audioUrl || '')}
         downloadProgress={downloadProgress.get(item.audioUrl || '') || 0}
         isDownloaded={downloadedEpisodes.has(safeEpisodeId)}
@@ -267,13 +218,15 @@ export default function Search() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }} edges={['top']}>
+
+
       <View style={styles.container}>
         {/* Search Bar */}
         <View style={styles.inputBox}>
           <Ionicons name="search" size={20} style={{ marginRight: 10 }} />
           <TextInput
             style={styles.input}
-            placeholder="Search by episode name..."
+            placeholder="Search the podcast here..."
             placeholderTextColor="#1F1F1F"
             keyboardType="web-search"
             autoCapitalize="none"
@@ -287,6 +240,16 @@ export default function Search() {
             </TouchableOpacity>
           )}
         </View>
+
+        {/* <View style={styles.row}>
+            {podcasts.map((item) => (
+              <TouchableOpacity key={item.id} style={styles.card}>
+                <Image source={item.image} style={styles.cardImage} />
+                <Text numberOfLines={2} style={styles.title}>{item.title}</Text>
+                <Text style={styles.category}>{item.category}</Text>
+              </TouchableOpacity>
+            ))}
+          </View> */}
 
         {/* Results Count */}
         {searchQuery.trim() !== "" && (
@@ -311,9 +274,12 @@ export default function Search() {
           )}
         />
       </View>
+
     </SafeAreaView>
   );
 }
+
+const cardWidth = (Dimensions.get('window').width / 2) - 25;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff", padding: 20 },
@@ -400,4 +366,42 @@ const styles = StyleSheet.create({
     color: "#999",
     marginTop: 8,
   },
+  row: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+
+  card: {
+    width: cardWidth,
+    backgroundColor: "#fff",   // <-- ADD THIS
+    borderRadius: 12,
+    marginBottom: 20,
+    paddingBottom: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,       // Thoda kam shadow taake soft lage
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  cardImage: {
+    width: '100%',
+    height: 125,                     // 150 → 125 for better balance
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+  },
+
+  title: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    marginTop: 8,
+    paddingHorizontal: 8,     // <-- ADD
+  },
+  category: {
+    fontSize: 13,
+    color: 'gray',
+    marginTop: 3,
+    paddingHorizontal: 8,     // <-- ADD
+  },
 });
+

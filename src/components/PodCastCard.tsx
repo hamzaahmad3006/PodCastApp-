@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, Image, TouchableOpacity, StyleSheet, Share } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import Feather from "react-native-vector-icons/Feather";
 import { Svg, Circle } from "react-native-svg";
@@ -23,7 +23,16 @@ export default function PodcastCard({
 }: PodcastCardProps) {
     const imageUrl = item.image || item.image_url || item.episode?.image_url || "https://via.placeholder.com/100";
 
-
+    // Share Function
+    const handleShare = async () => {
+        try {
+            await Share.share({
+                message: `Check out this podcast: ${item.title || item.episode?.title}\nListen here: ${item.audioUrl || item.episode?.audio_url}`,
+            });
+        } catch (error) {
+            console.log("Share error:", error);
+        }
+    };
 
     return (
         <View style={styles.podcastItem}>
@@ -34,8 +43,7 @@ export default function PodcastCard({
                     {item.title || item.episode?.title}
                 </Text>
                 <Text style={styles.podcastSpeaker} numberOfLines={1}>
-
-                    {item.pubDate || item.episode?.pub_date}
+                    {item.pubDate || item.pub_date || item.episode?.pub_date || item.episode?.pubDate}
                 </Text>
 
                 <View style={styles.podcastActions}>
@@ -72,13 +80,17 @@ export default function PodcastCard({
                                     <Text style={styles.progressText}>{Math.round(downloadProgress * 100)}%</Text>
                                 </View>
                             ) : (
-                                <Feather name="download" size={20} style={styles.actionIcon} />
+                                <Image source={require("../assets/Download.png")} style={styles.actionIcon} />
                             )}
                         </TouchableOpacity>
                     )}
 
-                    {/* More / Share */}
-                    <Feather name="share-2" size={20} style={styles.actionIcon} />
+                    {/* Share Button */}
+                    <TouchableOpacity onPress={handleShare}>
+                        <Feather name="share-2" size={20} style={styles.actionIcon} />
+                    </TouchableOpacity>
+
+                    {/* More Button */}
                     <Feather name="more-vertical" size={20} style={styles.actionIcon} />
                 </View>
             </View>
@@ -88,7 +100,7 @@ export default function PodcastCard({
 
 const styles = StyleSheet.create({
     podcastItem: { flexDirection: "row", marginTop: 20, backgroundColor: "#F9F9F9", padding: 12, borderRadius: 14, alignItems: "center" },
-    podcastImage: { width: 95, height: 95, borderRadius: 14 },
+    podcastImage: { width: 100, height: 100, borderRadius: 14 },
     podcastContent: { flex: 1, marginLeft: 12 },
     podcastTitle: { fontSize: 15, fontWeight: "700" },
     podcastSpeaker: { color: "gray", marginTop: 3 },
@@ -100,3 +112,4 @@ const styles = StyleSheet.create({
     progressText: { position: "absolute", fontSize: 8, fontWeight: "700", color: "#4CAF50" },
     downloadedContainer: { marginLeft: 15 },
 });
+

@@ -7,6 +7,7 @@ import { setLoggedIn, setLoggedOut } from "./src/redux/authSlice";
 import NotificationService from "./src/services/NotificationService";
 import { NotificationDatabaseService } from "./src/services/NotificationDatabaseService";
 import { loadNotifications } from "./src/redux/notificationSlice";
+import { StatusBar } from "react-native";
 
 export default function App() {
   useEffect(() => {
@@ -153,6 +154,10 @@ export default function App() {
 
   return (
     <Provider store={store}>
+      <StatusBar
+        barStyle="dark-content"  // ← makes icons/text light
+        backgroundColor="red"    // ← makes status bar black
+      />
       <AppNavigator />
     </Provider>
   );
