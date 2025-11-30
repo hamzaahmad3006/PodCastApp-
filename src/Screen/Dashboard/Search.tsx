@@ -4,13 +4,14 @@ import { View, Text, Image, TouchableOpacity, FlatList, StyleSheet, TextInput, A
 import { Circle, Svg } from "react-native-svg";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import Feather from "react-native-vector-icons/Feather";
-import { useAppSelector } from "../../redux/hooks";
+import { useAppSelector, useAppDispatch } from "../../redux/hooks";
 import { XMLParser } from "fast-xml-parser";
 import { DownloadService } from "../../services/DownloadService";
 import { DatabaseService } from "../../services/database";
 import { SUPABASE_ANON_KEY } from "@env";
 import { SafeAreaView } from "react-native-safe-area-context";
 import PodcastCard from "../../components/PodCastCard";
+import { setPlaylist } from "../../redux/playerSlice";
 
 interface Episode {
   title: string;
@@ -48,6 +49,7 @@ interface Episode {
 // ];
 
 export default function Search() {
+  const dispatch = useAppDispatch();
   const { user } = useAppSelector((state: any) => state.auth);
   const navigation = useNavigation<any>();
 
@@ -115,8 +117,10 @@ export default function Search() {
 
   // Memoized callback for playing episodes
   const handlePlay = useCallback((index: number) => {
+    // Dispatch to Redux for mini player
+    dispatch(setPlaylist({ episodes: filteredEpisodes, index }));
     navigation.navigate("Player", { episodes: filteredEpisodes, index });
-  }, [filteredEpisodes, navigation]);
+  }, [filteredEpisodes, navigation, dispatch]);
 
   // Handle download
   const handleDownload = useCallback(async (episode: Episode) => {

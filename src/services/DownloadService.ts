@@ -1,5 +1,5 @@
 import RNFS from 'react-native-fs';
-import { Platform } from 'react-native';
+import { Platform, ToastAndroid } from 'react-native';
 import { supabase } from '../supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -261,6 +261,17 @@ export const DownloadService = {
                 );
                 this.activeDownloads.delete(episodeId);
                 console.log('Download complete:', filePath, 'Size:', fileSize);
+
+                // Show toast notification for download completion
+                if (Platform.OS === 'android') {
+                    const formattedSize = this.formatBytes(fileSize);
+                    ToastAndroid.showWithGravity(
+                        `✅ ${episodeTitle} (${formattedSize})`,
+                        ToastAndroid.LONG,
+                        ToastAndroid.BOTTOM
+                    );
+                }
+
                 return filePath;
             } else {
                 throw new Error(`Download failed with status code: ${result.statusCode}`);

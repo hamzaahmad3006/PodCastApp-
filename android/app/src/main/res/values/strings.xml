@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">podapp</string>
+    <string name="app_name">PodCastApp</string>
 
      <!-- Google OAuth Client ID -->
     <string name="default_web_client_id">

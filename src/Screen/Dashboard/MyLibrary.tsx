@@ -2,15 +2,17 @@ import React, { useState, useEffect, useCallback } from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, ActivityIndicator, RefreshControl, Alert } from "react-native";
 import FontAwesome6 from "react-native-vector-icons/FontAwesome6";
 import Ionicons from "react-native-vector-icons/Ionicons";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
-import { useAppSelector } from "../../redux/hooks";
+import { useNavigation } from "@react-navigation/native";
+import { useAppSelector, useAppDispatch } from "../../redux/hooks";
 import { DatabaseService, LibraryItem } from "../../services/database";
 import { DownloadService } from "../../services/DownloadService";
 import { supabase } from "../../supabase";
 import PodcastCard from "../../components/PodCastCard";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { setPlaylist } from "../../redux/playerSlice";
 
 export default function MyLibrary() {
+    const dispatch = useAppDispatch();
     const navigation = useNavigation<any>();
     const { user } = useAppSelector((state) => state.auth);
     const [activeTab, setActiveTab] = useState<"liked" | "downloads">("liked");
@@ -43,24 +45,34 @@ export default function MyLibrary() {
                 // Fetch downloads with offline support
                 console.log(`MyLibrary: Fetching downloads for user:`, user.id);
 
-                // Get episode details with cached metadata fallback
+                // OPTIMIZED: Batch fetch all episodes at once
+                const episodeIds = downloads.map((d: any) => d.episode_id);
+                let episodesMap = new Map();
+
+                if (episodeIds.length > 0) {
+                    try {
+                        const { data: episodes } = await supabase
+                            .from("episodes")
+                            .select("*")
+                            .in("id", episodeIds);
+
+                        if (episodes) {
+                            episodes.forEach((ep: any) => episodesMap.set(ep.id, ep));
+                        }
+                    } catch (error) {
+                        console.warn('Supabase batch query failed, using cached metadata');
+                    }
+                }
+
+                // Map downloads to include episode data (from DB or Cache)
                 const episodesWithDetails = await Promise.all(
                     downloads.map(async (download: any) => {
-                        try {
-                            const { data: episode } = await supabase
-                                .from("episodes")
-                                .select("*")
-                                .eq("id", download.episode_id)
-                                .single();
-
-                            if (episode) {
-                                return { ...download, episode };
-                            }
-                        } catch (error) {
-                            console.warn('Supabase query failed, using cached metadata');
+                        // 1. Try from batch result
+                        if (episodesMap.has(download.episode_id)) {
+                            return { ...download, episode: episodesMap.get(download.episode_id) };
                         }
 
-                        // Fallback: use cached metadata when offline
+                        // 2. Fallback: use cached metadata when offline or not found in DB
                         const cachedMeta = await DownloadService.getEpisodeMetadata(download.episode_id);
                         return {
                             ...download,
@@ -185,34 +197,37 @@ export default function MyLibrary() {
     const handlePlay = (item: any, index: number) => {
         // Navigate to Player with the episode
         const episodes = activeTab === "liked" ? libraryItems : downloadedItems;
+        const mappedEpisodes = episodes.map(e => {
+            // For downloaded episodes, use local file path
+            const audioUrl = activeTab === "downloads" && e.local_path
+                ? e.local_path
+                : (e.episode?.audio_url || "");
+
+            // Provide fallback image to prevent TrackPlayer error
+            const imageUrl = e.episode?.image_url || "https://via.placeholder.com/300x300.png?text=Podcast";
+
+
+            return {
+                title: e.episode?.title || "Unknown",
+                audioUrl: audioUrl,
+                image: imageUrl,
+                pubDate: e.episode?.pub_date || "",
+                description: e.episode?.description || "",
+            };
+        });
+
+        // Dispatch to Redux for mini player
+        dispatch(setPlaylist({ episodes: mappedEpisodes, index }));
+
         navigation.navigate("Player", {
-            episodes: episodes.map(e => {
-                // For downloaded episodes, use local file path
-                const audioUrl = activeTab === "downloads" && e.local_path
-                    ? e.local_path
-                    : (e.episode?.audio_url || "");
-
-                // Provide fallback image to prevent TrackPlayer error
-                const imageUrl = e.episode?.image_url || "https://via.placeholder.com/300x300.png?text=Podcast";
-
-
-                return {
-                    title: e.episode?.title || "Unknown",
-                    audioUrl: audioUrl,
-                    image: imageUrl,
-                    pubDate: e.episode?.pub_date || "",
-                    description: e.episode?.description || "",
-                };
-            }),
+            episodes: mappedEpisodes,
             index
         });
     };
 
-    useFocusEffect(
-        useCallback(() => {
-            fetchLibrary();
-        }, [user?.id, activeTab])
-    );
+    useEffect(() => {
+        fetchLibrary();
+    }, [user?.id, activeTab]);
 
     const onRefresh = () => {
         setRefreshing(true);

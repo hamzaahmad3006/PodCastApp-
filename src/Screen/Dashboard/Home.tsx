@@ -4,12 +4,13 @@ import { View, Text, Image, TouchableOpacity, FlatList, StyleSheet, ActivityIndi
 import { Circle, Svg } from "react-native-svg";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import Feather from "react-native-vector-icons/Feather";
-import { useAppSelector } from "../../redux/hooks";
+import { useAppSelector, useAppDispatch } from "../../redux/hooks";
 import { DownloadService } from "../../services/DownloadService";
 import { DatabaseService } from "../../services/database";
 import { SUPABASE_ANON_KEY } from "@env";
 import PodcastCard from "../../components/PodCastCard";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { setPlaylist } from "../../redux/playerSlice";
 
 interface Episode {
   title: string;
@@ -21,6 +22,7 @@ interface Episode {
 
 export default function Home() {
 
+  const dispatch = useAppDispatch();
   const { user } = useAppSelector((state: any) => state.auth);
   const { unreadCount } = useAppSelector((state: any) => state.notifications);
 
@@ -83,8 +85,10 @@ export default function Home() {
 
   // Memoized callback for playing episodes - MUST be before any conditional returns
   const handlePlay = useCallback((index: number) => {
+    // Dispatch to Redux for mini player
+    dispatch(setPlaylist({ episodes, index }));
     navigation.navigate("Player", { episodes, index });
-  }, [episodes, navigation]);
+  }, [episodes, navigation, dispatch]);
 
   // Handle download
   const handleDownload = useCallback(async (episode: Episode) => {

@@ -293,7 +293,7 @@ export default function EditProfile({ navigation }: Props) {
 
                                         store.dispatch(setLoggedOut());
 
-                                        navigation.replace("Login");
+                                        navigation.replace("Register");
                                     } catch (error: any) {
                                         Alert.alert("Error", error.message);
                                     }

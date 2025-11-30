@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { NavigationContainer, createNavigationContainerRef } from "@react-navigation/native";
 import Ionicons from "react-native-vector-icons/Ionicons";
+import { View } from "react-native";
 
 export const navigationRef = createNavigationContainerRef<any>();
 
@@ -23,6 +24,9 @@ import Search from "../Screen/Dashboard/Search";
 import MyLibrary from "../Screen/Dashboard/MyLibrary";
 import Profile from "../Screen/Dashboard/Profile";
 import NotificationsScreen from "../Screen/Dashboard/NotificationsScreen";
+
+//===== Components =======
+import MiniPlayer from "../components/MiniPlayer";
 
 // ----- Types -----
 type TabParamList = {
@@ -91,15 +95,37 @@ const MyTabs: React.FC = () => (
   </Tab.Navigator>
 );
 
-// Main Stack with Tabs + Player + AllEpisodes screens
-const MainStackNavigator: React.FC = () => (
-  <MainStack.Navigator screenOptions={{ headerShown: false }}>
-    <MainStack.Screen name="Tabs" component={MyTabs} />
-    <MainStack.Screen name="Player" component={PlayerScreen} />
-    <MainStack.Screen name="AllEpisodes" component={AllEpisodes} />
-    <MainStack.Screen name="Notifications" component={NotificationsScreen} />
-  </MainStack.Navigator>
-);
+// Main Stack with Tabs + Player + AllEpisodes screens + MiniPlayer
+const MainStackNavigator: React.FC = () => {
+  const { currentEpisode } = useAppSelector((state: RootState) => state.player);
+  const [currentRouteName, setCurrentRouteName] = React.useState<string>('');
+
+  return (
+    <View style={{ flex: 1 }}>
+      <MainStack.Navigator
+        screenOptions={{ headerShown: false }}
+        screenListeners={{
+          state: (e) => {
+            // Get the current route name
+            const state = e.data.state;
+            if (state) {
+              const route = state.routes[state.index];
+              setCurrentRouteName(route.name);
+            }
+          },
+        }}
+      >
+        <MainStack.Screen name="Tabs" component={MyTabs} />
+        <MainStack.Screen name="Player" component={PlayerScreen} />
+        <MainStack.Screen name="AllEpisodes" component={AllEpisodes} />
+        <MainStack.Screen name="Notifications" component={NotificationsScreen} />
+      </MainStack.Navigator>
+
+      {/* Show MiniPlayer only when there's a current episode AND not on Player/AllEpisodes/Notifications screens */}
+      {currentEpisode && currentRouteName !== 'Player' && currentRouteName !== 'AllEpisodes' && currentRouteName !== 'Notifications' && <MiniPlayer />}
+    </View>
+  );
+};
 
 export default function AppNavigator() {
   const { isAuthenticated } = useAppSelector((state: RootState) => state.auth);
@@ -113,8 +139,8 @@ export default function AppNavigator() {
         ) : (
           // Auth Screens for unauthenticated users
           <>
-            <Stack.Screen name="Login" component={Login} />
             <Stack.Screen name="Register" component={Register} />
+            <Stack.Screen name="Login" component={Login} />
             <Stack.Screen name="RegisterForm" component={RegisterForm} />
           </>
         )}
