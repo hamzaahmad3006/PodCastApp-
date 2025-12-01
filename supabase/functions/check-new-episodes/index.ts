@@ -109,6 +109,66 @@ async function sendPushNotification(episode: Episode): Promise<{ success: boolea
     }
 }
 
+// Save notification to database for all users
+async function saveNotificationForAllUsers(supabase: any, episode: Episode): Promise<{ success: boolean; count: number }> {
+    try {
+        console.log('💾 Saving notification to database for all users...')
+
+        // Fetch all user IDs from profiles table
+        const { data: users, error: usersError } = await supabase
+            .from('profiles')
+            .select('id')
+
+        if (usersError) {
+            console.error('❌ Error fetching users:', usersError)
+            return { success: false, count: 0 }
+        }
+
+        if (!users || users.length === 0) {
+            console.log('⚠️ No users found in database')
+            return { success: true, count: 0 }
+        }
+
+        console.log(`👥 Found ${users.length} users`)
+
+        // Create notification records for all users
+        const notificationRecords = users.map((user: any) => ({
+            user_id: user.id,
+            title: '🎙️ New Episode Available!',
+            body: episode.title,
+            data: {
+                type: 'new_episode',
+                episode_title: episode.title,
+                episode_url: episode.audioUrl,
+                audioUrl: episode.audioUrl,
+                description: episode.description,
+                image: episode.image,
+                duration: episode.duration || '0:00',
+                pub_date: episode.pubDate
+            },
+            read: false,
+            created_at: new Date().toISOString()
+        }))
+
+        // Insert all notification records
+        const { error: insertError } = await supabase
+            .from('user_notifications')
+            .insert(notificationRecords)
+
+        if (insertError) {
+            console.error('❌ Error inserting notifications:', insertError)
+            return { success: false, count: 0 }
+        }
+
+        console.log(`✅ Successfully saved ${users.length} notification records`)
+        return { success: true, count: users.length }
+
+    } catch (error: any) {
+        console.error('❌ Error in saveNotificationForAllUsers:', error)
+        return { success: false, count: 0 }
+    }
+}
+
 // Main function
 serve(async (_req: Request) => {
     try {
@@ -151,6 +211,15 @@ serve(async (_req: Request) => {
             const { success: notificationSent, result } = await sendPushNotification(latestEpisode)
 
             if (notificationSent) {
+                // Save notification to database for all users
+                const { success: dbSaved, count } = await saveNotificationForAllUsers(supabase, latestEpisode)
+
+                if (dbSaved) {
+                    console.log(`✅ Notification saved to database for ${count} users`)
+                } else {
+                    console.error('⚠️ Failed to save notification to database, but OneSignal notification was sent')
+                }
+
                 // Update last checked episode
                 const { error: updateError } = await supabase
                     .from('app_settings')
@@ -170,7 +239,8 @@ serve(async (_req: Request) => {
                     JSON.stringify({
                         success: true,
                         message: 'New episode detected and notification sent',
-                        episode: latestEpisode.title
+                        episode: latestEpisode.title,
+                        users_notified: count
                     }),
                     { status: 200, headers: { 'Content-Type': 'application/json' } }
                 )
