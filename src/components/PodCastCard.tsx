@@ -80,7 +80,8 @@ export default function PodcastCard({
                                     <Text style={styles.progressText}>{Math.round(downloadProgress * 100)}%</Text>
                                 </View>
                             ) : (
-                                <Image source={require("../assets/Download.png")} style={styles.actionIcon} />
+                                // <Image source={require("../assets/Download.png")} style={styles.actionIcon} />
+                                <Ionicons name="arrow-down-circle-outline" size={24} style={styles.actionIcon} />
                             )}
                         </TouchableOpacity>
                     )}

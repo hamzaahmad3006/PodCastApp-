@@ -1,97 +1,168 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# NCAST - Podcast Streaming App
 
-# Getting Started
+## 📱 About
+A cross-platform podcast streaming app built with React Native and Supabase. Stream podcasts, download for offline listening, manage your library, and receive notifications for new episodes.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## ✨ Features
 
-## Step 1: Start Metro
+### ✅ Implemented
+- **Authentication:** Email, Google, and Apple Sign-In
+- **Browse & Search:** Discover trending and new podcast episodes
+- **Player:** Full-featured audio player with background playback
+- **Mini-Player:** Persistent mini-player across screens
+- **Library:** Like episodes, download for offline, view history
+- **Profile:** Edit avatar, bio, username, view recently played
+- **Notifications:** Push notifications for new episodes (OneSignal)
+- **Offline Support:** Download episodes for offline listening
+- **UI Design:** Matches Figma design with custom fonts
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+## 🛠️ Tech Stack
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+- **Framework:** React Native (CLI) v0.82.1
+- **Language:** TypeScript
+- **State Management:** Redux Toolkit
+- **Backend:** Supabase (Auth, Postgres, Storage)
+- **Audio Player:** react-native-track-player
+- **Notifications:** OneSignal
+- **Storage:** react-native-fs for offline downloads
+- **Styling:** StyleSheet with custom fonts (Inter, Manrope, PublicSans)
 
-```sh
-# Using npm
-npm start
+## 📂 Project Structure
 
-# OR using Yarn
-yarn start
+```
+src/
+├── Appnavigation/      # Navigation setup
+├── Screen/             # All screens (Auth, Dashboard)
+│   ├── Auth/          # Login, Register screens
+│   └── Dashboard/     # Home, Player, Library, Profile, etc.
+├── components/         # Reusable components (MiniPlayer, etc.)
+├── redux/              # Redux slices and store
+├── services/           # API services (Database, Download, Notification)
+├── assets/             # Images and custom fonts
+└── types/              # TypeScript type definitions
 ```
 
-## Step 2: Build and run your app
+## 🚀 Getting Started
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+### Prerequisites
+- Node.js >= 20
+- React Native development environment setup
+- Android Studio (for Android)
+- Xcode (for iOS, macOS only)
 
-### Android
+### Installation
 
-```sh
-# Using npm
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/bootcampwise/Project2-PodCastApp.git
+   cd Project2-PodCastApp
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Setup environment variables**
+   
+   Create `.env` file in root:
+   ```
+   SUPABASE_URL=your_supabase_url
+   SUPABASE_ANON_KEY=your_supabase_anon_key
+   ONESIGNAL_APP_ID=your_onesignal_app_id
+   GOOGLE_WEB_CLIENT_ID=your_google_client_id
+   ```
+
+4. **Link custom fonts**
+   ```bash
+   npx react-native-asset
+   ```
+
+### Running the App
+
+**Android:**
+```bash
 npm run android
-
-# OR using Yarn
-yarn android
 ```
 
-### iOS
-
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
-```
-
-Then, and every time you update your native dependencies, run:
-
-```sh
-bundle exec pod install
-```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
+**iOS:**
+```bash
+cd ios && pod install && cd ..
 npm run ios
-
-# OR using Yarn
-yarn ios
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+## 📦 Building APK
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+### Debug APK
+```bash
+cd android
+./gradlew assembleDebug
+```
+APK location: `android/app/build/outputs/apk/debug/app-debug.apk`
 
-## Step 3: Modify your app
+### Release APK
+1. Generate signing key:
+   ```bash
+   cd android/app
+   keytool -genkeypair -v -storetype PKCS12 -keystore podapp-release-key.keystore -alias podapp-key-alias -keyalg RSA -keysize 2048 -validity 10000
+   ```
 
-Now that you have successfully run the app, let's make changes!
+2. Configure `android/gradle.properties`
+3. Build:
+   ```bash
+   cd android
+   ./gradlew assembleRelease
+   ```
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+APK location: `android/app/build/outputs/apk/release/app-release.apk`
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+## 🗄️ Database Schema
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+### Tables (Supabase)
+- **profiles:** User profiles
+- **episodes:** Podcast episodes
+- **user_library:** User's library (liked, downloaded, history)
+- **user_notifications:** Notification history
+- **app_settings:** App configuration
 
-## Congratulations! :tada:
+### Storage Buckets
+- **avatars:** User profile pictures
 
-You've successfully run and modified your React Native App. :partying_face:
+## 🔔 Notifications
 
-### Now what?
+Powered by OneSignal and Supabase Edge Functions:
+- `check-new-episodes`: Scheduled function to check RSS feed and send push notifications
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+## 📸 Screenshots
 
-# Troubleshooting
+[Add your screenshots here]
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+## 🎨 Design
 
-# Learn More
+UI designed to match Figma specifications with:
+- Custom color scheme (#A637FF primary)
+- Custom fonts (Inter, Manrope, PublicSans)
+- Responsive layouts for all screen sizes
 
-To learn more about React Native, take a look at the following resources:
+## 🧪 Testing
 
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+Run tests:
+```bash
+npm test
+```
+
+## 📝 License
+
+This project is for educational purposes.
+
+## 👤 Author
+
+**Ahmad Mahar**
+- GitHub: [@maharonline](https://github.com/maharonline)
+- Organization: [BootCampWise](https://github.com/bootcampwise)
+
+## 🙏 Acknowledgments
+
+- BBC Podcasts for RSS feed
+- Supabase for backend services
+- OneSignal for push notifications
