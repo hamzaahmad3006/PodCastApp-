@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, KeyboardAvoidingView, Platform, TextInput, Alert } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, KeyboardAvoidingView, Platform, TextInput, Alert, ActivityIndicator } from "react-native";
 import FontAwesome6 from "react-native-vector-icons/FontAwesome6";
 import { supabase } from "../../supabase";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -85,6 +85,11 @@ export default function RegisterForm({ navigation }: Props) {
                     keyboardShouldPersistTaps="handled"
                 >
 
+                    <Image source={require("../../assets/headphone-dynamic-gradient.png")} style={styles.background} />
+
+                    <Text style={styles.bgTextTop}>NCAS</Text>
+                    <Text style={styles.bgTextBottom}>CAST</Text>
+
                     <View style={styles.container}>
                         {/*===== LOGO =====*/}
                         <Image
@@ -146,10 +151,18 @@ export default function RegisterForm({ navigation }: Props) {
 
                             {/*===== Login Button ===== */}
 
-                            <TouchableOpacity style={styles.loginBtn}>
-                                {/* <FontAwesome6 name="google" size={22} color="#4285F4" /> */}
-                                <Text style={styles.loginText} onPress={handleRegister}>{isLoading ? "Singing IN....." : "Sign In"}</Text>
+                            <TouchableOpacity
+                                style={styles.loginBtn}
+                                onPress={handleRegister}
+                                disabled={isLoading}
+                            >
+                                {isLoading ? (
+                                    <ActivityIndicator size="small" color="#fff" />
+                                ) : (
+                                    <Text style={styles.loginText}>Sign Up</Text>
+                                )}
                             </TouchableOpacity>
+
 
 
 
@@ -170,6 +183,33 @@ export default function RegisterForm({ navigation }: Props) {
 
 // =============== StyleSheet ====================
 const styles = StyleSheet.create({
+    background: {
+        width: "100%",
+        height: "100%",
+        position: "absolute",
+        top: 0,
+        left: 0,
+        resizeMode: "cover",
+
+    },
+    bgTextTop: {
+        position: "absolute",
+        top: 150,
+        left: 35,
+        fontSize: 120,
+        fontFamily: "PublicSans-ExtraBold",
+        color: "#FFFFFF80",
+        opacity: 0.7,
+    },
+    bgTextBottom: {
+        position: "absolute",
+        top: 250,
+        left: -10,
+        fontSize: 120,
+        fontFamily: "PublicSans-ExtraBold",
+        color: "#FFFFFF80",
+        opacity: 0.7,
+    },
     container: {
         flex: 1,
         backgroundColor: "#fff",

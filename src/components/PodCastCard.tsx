@@ -1,30 +1,27 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, Text, Image, TouchableOpacity, StyleSheet, Share } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import Feather from "react-native-vector-icons/Feather";
 import { Svg, Circle } from "react-native-svg";
+import { DownloadManager } from "../controller/DownloadManger";
 
 interface PodcastCardProps {
-    item: any; // episode or library item
+    item: any;
     onPlay: () => void;
-    onDownload: () => void;
-    downloading: boolean;
-    downloadProgress: number;
+    onDownloadComplete?: () => void; // Simple callback when download finishes
     isDownloaded: boolean;
+    userId?: string;
 }
 
-export default function PodcastCard({
-    item,
-    onPlay,
-    onDownload,
-    downloading,
-    downloadProgress,
-    isDownloaded,
-}: PodcastCardProps) {
-    const imageUrl = item.image || item.image_url || item.episode?.image_url;
+export default function PodcastCard({ item, onPlay, userId, isDownloaded, onDownloadComplete }: PodcastCardProps) {
+    // Internal state for download progress
+    const [downloading, setDownloading] = useState(false);
+    const [progress, setProgress] = useState(0);
+
+    const imageUrl = item.image || item.episode?.image || item.image_url || item.episode?.image_url;
     const imageSource = imageUrl
         ? { uri: imageUrl }
-        : require("../assets/headphone.png"); // Fallback to local image
+        : require("../assets/headphone.png");
 
     // Share Function
     const handleShare = async () => {
@@ -34,6 +31,31 @@ export default function PodcastCard({
             });
         } catch (error) {
             // Share error
+        }
+    };
+
+    // Download Function - Self-contained
+    const handleDownload = async () => {
+        if (!userId || isDownloaded) return;
+
+        const episodeToDownload = item.episode || item;
+
+        setDownloading(true);
+
+        try {
+            await DownloadManager.downloadEpisode(userId, episodeToDownload, {
+                onProgress: (percent: number) => {
+                    setProgress(percent);
+                },
+                onComplete: () => {
+                    setDownloading(false);
+                    setProgress(0);
+                    onDownloadComplete?.(); // Notify parent to refresh
+                },
+            });
+        } catch (error) {
+            setDownloading(false);
+            setProgress(0);
         }
     };
 
@@ -62,7 +84,7 @@ export default function PodcastCard({
                             <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
                         </View>
                     ) : (
-                        <TouchableOpacity onPress={onDownload} disabled={downloading}>
+                        <TouchableOpacity onPress={handleDownload} disabled={downloading}>
                             {downloading ? (
                                 <View style={styles.progressContainer}>
                                     <Svg width="24" height="24" viewBox="0 0 24 24">
@@ -75,12 +97,12 @@ export default function PodcastCard({
                                             strokeWidth="2"
                                             fill="none"
                                             strokeDasharray={`${2 * Math.PI * 10}`}
-                                            strokeDashoffset={`${2 * Math.PI * 10 * (1 - downloadProgress)}`}
+                                            strokeDashoffset={`${2 * Math.PI * 10 * (1 - progress)}`}
                                             strokeLinecap="round"
                                             transform="rotate(-90 12 12)"
                                         />
                                     </Svg>
-                                    <Text style={styles.progressText}>{Math.round(downloadProgress * 100)}%</Text>
+                                    <Text style={styles.progressText}>{Math.round(progress * 100)}%</Text>
                                 </View>
                             ) : (
                                 // <Image source={require("../assets/Download.png")} style={styles.actionIcon} />

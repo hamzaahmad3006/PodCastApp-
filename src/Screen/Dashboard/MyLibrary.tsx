@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, ActivityIndicator, RefreshControl, Alert } from "react-native";
 import FontAwesome6 from "react-native-vector-icons/FontAwesome6";
 import Ionicons from "react-native-vector-icons/Ionicons";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useAppSelector, useAppDispatch } from "../../redux/hooks";
 import { DatabaseService, LibraryItem } from "../../services/database";
 import { DownloadService } from "../../services/DownloadService";
@@ -20,9 +20,6 @@ export default function MyLibrary() {
     const [downloadedItems, setDownloadedItems] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
-
-    const [downloadingEpisodes, setDownloadingEpisodes] = useState<Set<string>>(new Set());
-    const [downloadProgress, setDownloadProgress] = useState<Map<string, number>>(new Map());
     const [downloadedEpisodeIds, setDownloadedEpisodeIds] = useState<Set<string>>(new Set());
 
     const fetchLibrary = async () => {
@@ -78,8 +75,8 @@ export default function MyLibrary() {
                             episode: cachedMeta || {
                                 id: download.episode_id,
                                 title: "Unknown Episode",
-                                image_url: "",
-                                pub_date: "",
+                                image: "",
+                                pubDate: "",
                             },
                         };
                     })
@@ -100,93 +97,7 @@ export default function MyLibrary() {
         }
     };
 
-    // Handle download
-    const handleDownload = useCallback(async (item: any) => {
-        const episode = item.episode || item;
-        const audioUrl = episode.audio_url || episode.audioUrl;
 
-        if (!audioUrl) {
-            Alert.alert("Error", "No audio URL available");
-            return;
-        }
-
-        if (!user?.id) {
-            Alert.alert("Error", "Please log in to download episodes");
-            return;
-        }
-
-        const episodeId = audioUrl;
-        setDownloadingEpisodes(prev => new Set(prev).add(episodeId));
-
-        // Extract a safe ID (same logic as Home.tsx)
-        const safeEpisodeId = DatabaseService.getEpisodeIdFromUrl(audioUrl);
-
-        try {
-            // Ensure episode exists in database BEFORE downloading
-            // Normalize episode object for upsert
-            const episodeData = {
-                title: episode.title,
-                description: episode.description || "",
-                pubDate: episode.pub_date || episode.pubDate,
-                audioUrl: audioUrl,
-                image: episode.image_url || episode.image,
-                id: safeEpisodeId
-            };
-
-            await DatabaseService.upsertEpisode(episodeData);
-
-            // Download the file
-            await DownloadService.downloadAudio(
-                user.id,
-                safeEpisodeId,
-                audioUrl,
-                episode.title,
-                (progress) => {
-                    const percent = progress.progress;
-                    setDownloadProgress(prev => new Map(prev).set(episodeId, percent));
-                }
-            );
-
-            // Cache episode metadata for offline access
-            await DownloadService.cacheEpisodeMetadata(safeEpisodeId, {
-                title: episode.title,
-                description: episode.description || "",
-                image_url: episode.image_url || episode.image,
-                pub_date: episode.pub_date || episode.pubDate,
-                audio_url: audioUrl,
-            });
-
-            // Save to database with 'downloaded' status
-            await DatabaseService.addToLibrary(user.id, {
-                ...episodeData,
-                id: safeEpisodeId
-            }, 'downloaded');
-
-            Alert.alert("Success", "Episode downloaded successfully!");
-
-            // Mark as downloaded
-            setDownloadedEpisodeIds(prev => new Set(prev).add(safeEpisodeId));
-
-            // Refresh library if we are in downloads tab (optional, but good)
-            if (activeTab === "downloads") {
-                fetchLibrary();
-            }
-
-        } catch (error: any) {
-            Alert.alert("Download Failed", error.message || "Failed to download episode");
-        } finally {
-            setDownloadingEpisodes(prev => {
-                const newSet = new Set(prev);
-                newSet.delete(episodeId);
-                return newSet;
-            });
-            setDownloadProgress(prev => {
-                const newMap = new Map(prev);
-                newMap.delete(episodeId);
-                return newMap;
-            });
-        }
-    }, [user, activeTab]);
 
     const handlePlay = (item: any, index: number) => {
         // Navigate to Player with the episode
@@ -219,9 +130,16 @@ export default function MyLibrary() {
         });
     };
 
-    useEffect(() => {
-        fetchLibrary();
-    }, [user?.id, activeTab]);
+    const onDownloadComplete = () => {
+        fetchLibrary(); // refresh list
+    };
+
+
+    useFocusEffect(
+        useCallback(() => {
+            fetchLibrary();
+        }, [user?.id, activeTab])
+    );
 
     const onRefresh = () => {
         setRefreshing(true);
@@ -318,11 +236,10 @@ export default function MyLibrary() {
                                 return (
                                     <PodcastCard
                                         key={item.id || index}
-                                        item={item.episode || item}  // liked tab ya downloaded tab
+                                        item={item.episode || item}
                                         onPlay={() => handlePlay(item, index)}
-                                        onDownload={() => handleDownload(item)}
-                                        downloading={downloadingEpisodes.has(audioUrl)}
-                                        downloadProgress={downloadProgress.get(audioUrl) || 0}
+                                        onDownloadComplete={onDownloadComplete}
+                                        userId={user?.id}
                                         isDownloaded={isDownloaded}
                                     />
                                 )

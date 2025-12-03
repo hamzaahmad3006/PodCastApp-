@@ -45,91 +45,39 @@ export default function AllEpisodes({ navigation, route }: Props) {
         checkDownloads();
     }, [user?.id]);
 
-    // Handle download
-    const handleDownload = useCallback(async (episode: Episode) => {
-        if (!episode.audioUrl) {
-            Alert.alert("Error", "No audio URL available");
-            return;
-        }
-
-        if (!user?.id) {
-            Alert.alert("Error", "Please log in to download episodes");
-            return;
-        }
-
-        const episodeUrl = episode.audioUrl;
-        setDownloadingEpisodes(prev => new Set(prev).add(episodeUrl));
-
-        // Extract a safe ID for the download service
-        const safeEpisodeId = episode.audioUrl.split('/').pop()?.split('?')[0] || `ep_${Date.now()}`;
-
-        try {
-            // Ensure episode exists in database BEFORE downloading
-            await DatabaseService.upsertEpisode({
-                ...episode,
-                id: safeEpisodeId
-            });
-
-            // Download the file
-            await DownloadService.downloadAudio(
-                user.id,
-                safeEpisodeId,
-                episode.audioUrl,
-                episode.title,
-                (progress) => {
-                    const percent = progress.progress;
-                    setDownloadProgress(prev => new Map(prev).set(episodeUrl, percent));
-                }
-            );
-
-            // Cache episode metadata for offline access
-            await DownloadService.cacheEpisodeMetadata(safeEpisodeId, {
-                title: episode.title,
-                description: episode.description,
-                image_url: episode.image,
-                pub_date: episode.pubDate,
-                audio_url: episode.audioUrl,
-            });
-
-            Alert.alert("Success", "Episode downloaded successfully!");
-            setDownloadedEpisodes(prev => new Set(prev).add(safeEpisodeId));
-
-        } catch (error: any) {
-            Alert.alert("Download Failed", error.message || "Failed to download episode");
-        } finally {
-            setDownloadingEpisodes(prev => {
-                const newSet = new Set(prev);
-                newSet.delete(episodeUrl);
-                return newSet;
-            });
-            setDownloadProgress(prev => {
-                const newMap = new Map(prev);
-                newMap.delete(episodeUrl);
-                return newMap;
-            });
-        }
-    }, [user?.id]);
 
     // Memoized callback for playing episodes
     const handlePlay = useCallback((index: number) => {
         nav.navigate("Player", { episodes, index });
     }, [episodes, nav]);
 
-    // Memoized render function
-    const renderEpisode = useCallback(({ item, index }: { item: Episode; index: number }) => {
-        const episodeId = item.audioUrl?.split('/').pop()?.split('?')[0] || '';
-        return (
-            <PodcastCard
-                item={item}
-                onPlay={() => handlePlay(index)}
-                onDownload={() => handleDownload(item)}
-                downloading={downloadingEpisodes.has(item.audioUrl || '')}
-                downloadProgress={downloadProgress.get(item.audioUrl || '') || 0}
-                isDownloaded={downloadedEpisodes.has(episodeId)}
-            />
-        );
-    }, [handlePlay, handleDownload, downloadingEpisodes, downloadProgress, downloadedEpisodes]);
+    const loadDownloadedEpisodes = async () => {
+        if (!user?.id) return;
 
+        try {
+            const downloaded = await DownloadService.getDownloadedEpisodes(user.id);
+            const downloadedIds = new Set(downloaded.map((d: any) => d.episode_id));
+            setDownloadedEpisodes(downloadedIds);
+        } catch (e) { }
+    };
+
+    // Memoized render function
+    const renderEpisode = useCallback(
+        ({ item, index }: { item: Episode; index: number }) => {
+            const episodeId = DatabaseService.getEpisodeIdFromUrl(item.audioUrl || "");
+
+            return (
+                <PodcastCard
+                    item={item}
+                    onPlay={() => handlePlay(index)}
+                    onDownloadComplete={() => loadDownloadedEpisodes()}
+                    userId={user?.id}
+                    isDownloaded={downloadedEpisodes.has(episodeId)}
+                />
+            );
+        },
+        [handlePlay, user, downloadedEpisodes]
+    );
     // Get item layout for better scrolling performance
     const getItemLayout = useCallback((data: any, index: number) => ({
         length: 119, // height of podcastItem (95 + 12 + 12 padding)
@@ -175,6 +123,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: "#fff",
+        paddingBottom: 30,
     },
     header: {
         flexDirection: "row",

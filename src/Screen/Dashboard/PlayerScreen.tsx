@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, Alert, ActivityIndicator } from "react-native";
+import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, Alert, ActivityIndicator, Dimensions } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
-import Feather from "react-native-vector-icons/Feather";
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Slider from "@react-native-community/slider";
 import TrackPlayer, { useProgress, Event, State, useTrackPlayerEvents } from 'react-native-track-player';
@@ -470,7 +469,7 @@ export default function PlayerScreen({ navigation, route }: Props) {
               {isBuffering ? (
                 <ActivityIndicator size="large" color="#A637FF" />
               ) : (
-                <Ionicons name={isPlaying ? 'pause' : 'play'} size={32} color="#A637FF" />
+                <Ionicons name={isPlaying ? 'pause' : 'play'} size={34} color="#A637FF" style={styles.pausebtn} />
               )}
             </TouchableOpacity>
 
@@ -499,6 +498,8 @@ export default function PlayerScreen({ navigation, route }: Props) {
   );
 }
 
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -507,14 +508,12 @@ const styles = StyleSheet.create({
 
   scrollContent: {
     padding: 20,
-    // paddingTop: 40,
-    paddingBottom: 100,
+    paddingBottom: SCREEN_HEIGHT * 0.15, // 15% of screen height instead of fixed 100
   },
 
   header: {
     flexDirection: "row",
     alignItems: "center",
-    // marginBottom: 15,
   },
 
   backBtn: {
@@ -542,23 +541,26 @@ const styles = StyleSheet.create({
 
   podcastImage: {
     width: "100%",
-    height: 350,
+    height: SCREEN_HEIGHT * 0.4, // 40% of screen height (responsive)
+    maxHeight: 400, // Maximum height cap
+    minHeight: 250, // Minimum height for very small screens
     borderRadius: 40,
     marginTop: 20,
-    // marginBottom: 20,
   },
 
   author: {
     fontSize: 14,
     textAlign: "center",
     opacity: 0.6,
+    marginTop: 10,
   },
 
   podcastTitle: {
-    fontSize: 20,
+    fontSize: SCREEN_WIDTH < 360 ? 18 : 20, // Smaller font on small screens
     fontFamily: 'Inter-SemiBold',
     textAlign: "center",
     marginTop: 5,
+    paddingHorizontal: 10,
   },
 
   episode: {
@@ -580,10 +582,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 5,
-    marginLeft: -25,
-    paddingLeft: 40,
-    marginTop: 10
-
+    paddingHorizontal: 15, // Simplified - removed negative margins
+    marginTop: 10,
   },
 
   time: {
@@ -599,7 +599,7 @@ const styles = StyleSheet.create({
   },
 
   trackContainer: {
-    marginHorizontal: 15, // Align with slider thumb travel
+    marginHorizontal: 15,
     height: 9,
     backgroundColor: '#D3D3D3',
     borderRadius: 4,
@@ -621,8 +621,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-evenly",
     alignItems: "center",
-    marginTop: 0,
-    // marginBottom: 30,
+    marginTop: 10,
+    paddingHorizontal: 10,
   },
 
   playBtn: {
@@ -632,7 +632,14 @@ const styles = StyleSheet.create({
     borderRadius: 35,
     justifyContent: "center",
     alignItems: "center",
+    textAlign: 'center',
     elevation: 5,
+  },
+
+  pausebtn: {
+    // textAlign: 'center'
+    justifyContent: 'center',
+    alignItems: 'center'
   },
 
   smallBtn: {
@@ -641,6 +648,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+
   smallBtnText: {
     fontSize: 13,
     fontWeight: '600',
@@ -654,7 +662,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderTopLeftRadius: 25,
     borderTopRightRadius: 25,
-    width: 157,
+    width: Math.min(157, SCREEN_WIDTH * 0.4), // Responsive width
     alignItems: "center",
     justifyContent: "center",
     paddingBottom: 15,
@@ -665,6 +673,5 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 15,
     fontFamily: 'Inter-Regular',
-    // marginTop: 2,
   },
 });

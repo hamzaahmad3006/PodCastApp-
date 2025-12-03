@@ -158,11 +158,9 @@ export default function App() {
 
   return (
     <Provider store={store}>
-      <StatusBar
-        barStyle="default"  // ← makes icons/text light
-        backgroundColor="#000"    // ← makes status bar black
-      />
       <AppNavigator />
     </Provider>
   );
 }
+
+

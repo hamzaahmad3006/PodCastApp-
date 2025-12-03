@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Alert, Linking } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Alert, Linking, ToastAndroid } from "react-native";
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import appleAuth from '@invertase/react-native-apple-authentication';
 import { supabase } from "../../supabase";
@@ -80,8 +80,7 @@ export default function Register({ navigation }: Props) {
 
       //Navigate to Home
       navigation.replace("Root");
-
-      Alert.alert("Success", `Welcome ${data.session?.user?.email}`);
+      ToastAndroid.show("Welcome to PodApp ", ToastAndroid.LONG);
     } catch (error: any) {
       Alert.alert("Error", error.message);
     }
@@ -128,6 +127,12 @@ export default function Register({ navigation }: Props) {
       <ScrollView>
 
         <View style={styles.container}>
+
+
+          <Image source={require("../../assets/headphone-dynamic-gradient.png")} style={styles.background} />
+
+          <Text style={styles.bgTextTop}>NCAS</Text>
+          <Text style={styles.bgTextBottom}>CAST</Text>
           {/*===== LOGO =====*/}
           <Image
             source={require("../../assets/logo.png")}
@@ -201,6 +206,34 @@ export default function Register({ navigation }: Props) {
 
 // =============== StyleSheet ====================
 const styles = StyleSheet.create({
+
+  background: {
+    width: "100%",
+    height: "100%",
+    position: "absolute",
+    top: 0,
+    left: 0,
+    resizeMode: "cover",
+
+  },
+  bgTextTop: {
+    position: "absolute",
+    top: 150,
+    left: 35,
+    fontSize: 120,
+    fontFamily: "PublicSans-ExtraBold",
+    color: "#FFFFFF80",
+    opacity: 0.7,
+  },
+  bgTextBottom: {
+    position: "absolute",
+    top: 250,
+    left: -10,
+    fontSize: 120,
+    fontFamily: "PublicSans-ExtraBold",
+    color: "#FFFFFF80",
+    opacity: 0.7,
+  },
   container: {
     flex: 1,
     backgroundColor: "#fff",

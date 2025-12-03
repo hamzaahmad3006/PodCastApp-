@@ -62,6 +62,8 @@ export default function Search() {
 
   const SUPABASE_RSS_URL = "https://bfchuybsseczmjmmosda.supabase.co/functions/v1/rss"
 
+
+
   useEffect(() => {
     fetchEpisodes();
     loadDownloadedEpisodes();
@@ -119,93 +121,26 @@ export default function Search() {
     navigation.navigate("Player", { episodes: filteredEpisodes, index });
   }, [filteredEpisodes, navigation, dispatch]);
 
-  // Handle download
-  const handleDownload = useCallback(async (episode: Episode) => {
-    if (!episode.audioUrl) {
-      Alert.alert("Error", "No audio URL available");
-      return;
-    }
 
-    if (!user?.id) {
-      Alert.alert("Error", "Please log in to download episodes");
-      return;
-    }
-
-    const episodeId = episode.audioUrl;
-    setDownloadingEpisodes(prev => new Set(prev).add(episodeId));
-
-    // Extract a safe ID for the download service (must not be a URL)
-    const safeEpisodeId = episode.audioUrl.split('/').pop()?.split('?')[0] || `ep_${Date.now()}`;
-
-    try {
-      // Ensure episode exists in database BEFORE downloading
-      await DatabaseService.upsertEpisode({
-        ...episode,
-        id: safeEpisodeId
-      });
-
-      // Download the file
-      await DownloadService.downloadAudio(
-        user.id,
-        safeEpisodeId,
-        episode.audioUrl,
-        episode.title,
-        (progress) => {
-          const percent = progress.progress;
-          setDownloadProgress(prev => new Map(prev).set(episodeId, percent));
-        }
-      );
-
-      // Cache episode metadata for offline access
-      await DownloadService.cacheEpisodeMetadata(safeEpisodeId, {
-        title: episode.title,
-        description: episode.description,
-        image_url: episode.image,
-        pub_date: episode.pubDate,
-        audio_url: episode.audioUrl,
-      });
-
-      // Save to database with 'downloaded' status
-      await DatabaseService.addToLibrary(user.id, {
-        ...episode,
-        id: safeEpisodeId
-      }, 'downloaded');
-
-      Alert.alert("Success", "Episode downloaded successfully!");
-
-      // Mark as downloaded
-      setDownloadedEpisodes(prev => new Set(prev).add(safeEpisodeId));
-    } catch (error: any) {
-      Alert.alert("Download Failed", error.message || "Failed to download episode");
-    } finally {
-      setDownloadingEpisodes(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(episodeId);
-        return newSet;
-      });
-      // Clear progress
-      setDownloadProgress(prev => {
-        const newMap = new Map(prev);
-        newMap.delete(episodeId);
-        return newMap;
-      });
-    }
-  }, [user]);
 
   // Memoized render function
-  const renderEpisode = useCallback(({ item, index }: { item: Episode; index: number }) => {
-    const safeEpisodeId = item.audioUrl?.split('/').pop()?.split('?')[0] || '';
-    return (
-      <PodcastCard
-        item={item}
-        onPlay={() => handlePlay(index)}
-        onDownload={() => handleDownload(item)}
-        downloading={downloadingEpisodes.has(item.audioUrl || '')}
-        downloadProgress={downloadProgress.get(item.audioUrl || '') || 0}
-        isDownloaded={downloadedEpisodes.has(safeEpisodeId)}
-      />
-    );
-  }, [handlePlay, handleDownload, downloadingEpisodes, downloadProgress, downloadedEpisodes]);
+  const renderEpisode = useCallback(
+    ({ item, index }: { item: Episode; index: number }) => {
+      const episodeId = DatabaseService.getEpisodeIdFromUrl(item.audioUrl || "");
+
+      return (
+        <PodcastCard
+          item={item}
+          onPlay={() => handlePlay(index)}
+          onDownloadComplete={() => loadDownloadedEpisodes()}
+          userId={user?.id}
+          isDownloaded={downloadedEpisodes.has(episodeId)}
+        />
+      );
+    },
+    [handlePlay, user, downloadedEpisodes]
+  );
+
   // Pull-to-refresh handler
   const onRefresh = useCallback(async () => {
     setRefreshing(true);

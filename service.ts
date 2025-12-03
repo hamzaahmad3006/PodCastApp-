@@ -13,12 +13,20 @@ const playbackService = async () => {
     await TrackPlayer.stop();
   });
 
-  TrackPlayer.addEventListener(Event.RemoteNext, () => {
-    // next track logic
+  TrackPlayer.addEventListener(Event.RemoteNext, async () => {
+    try {
+      await TrackPlayer.skipToNext();
+    } catch (error) {
+      console.warn('RemoteNext failed:', error);
+    }
   });
 
-  TrackPlayer.addEventListener(Event.RemotePrevious, () => {
-    // previous track logic
+  TrackPlayer.addEventListener(Event.RemotePrevious, async () => {
+    try {
+      await TrackPlayer.skipToPrevious();
+    } catch (error) {
+      console.warn('RemotePrevious failed:', error);
+    }
   });
 };
 

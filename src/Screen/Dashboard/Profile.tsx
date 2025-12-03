@@ -11,9 +11,13 @@ import { setLoggedOut, setLoggedIn } from "../../redux/authSlice";
 import { store } from "../../redux/store";
 import { DatabaseService, LibraryItem } from "../../services/database";
 import { DownloadService } from "../../services/DownloadService";
+import { DownloadManager } from "../../controller/DownloadManger";
 import PodcastCard from "../../components/PodCastCard";
 import { SafeAreaView } from "react-native-safe-area-context";
 import StripeBackground from "../../components/StripeLine";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import TrackPlayer from "react-native-track-player";
+
 
 interface Props {
     navigation: any;
@@ -29,8 +33,6 @@ export default function EditProfile({ navigation }: Props) {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [downloadedEpisodes, setDownloadedEpisodes] = useState<Set<string>>(new Set());
-    const [downloadingEpisodes, setDownloadingEpisodes] = useState<Set<string>>(new Set());
-    const [downloadProgress, setDownloadProgress] = useState<Map<string, number>>(new Map());
     const [showAvatarModal, setShowAvatarModal] = useState(false);
 
     const fetchProfileData = async () => {
@@ -79,13 +81,9 @@ export default function EditProfile({ navigation }: Props) {
             const downloadedIds = new Set(downloadedData.map((d: any) => d.episode_id));
             setDownloadedEpisodes(downloadedIds);
         } catch (error: any) {
-            console.error("Profile: Error fetching profile data:", error);
-            console.error("Profile: Error message:", error?.message);
-            console.error("Profile: Error code:", error?.code);
-            console.error("Profile: Error details:", JSON.stringify(error));
             Alert.alert("Error", "Failed to load profile data. Pull down to refresh.");
         } finally {
-            console.log("Profile: Setting loading to false");
+
             setLoading(false);
             setRefreshing(false);
         }
@@ -101,6 +99,8 @@ export default function EditProfile({ navigation }: Props) {
             fetchProfileData();
         }, [user?.id])
     );
+
+
 
     // Get avatar URL from either direct property or user_metadata (for Google OAuth)
     const avatarUrl = user?.avatar_url || user?.user_metadata?.avatar_url;
@@ -196,73 +196,26 @@ export default function EditProfile({ navigation }: Props) {
         }
     };
 
-    const handleDownload = async (item: LibraryItem) => {
-        const audioUrl = item.episode?.audio_url;
-        if (!audioUrl) {
-            Alert.alert("Error", "No audio URL available");
-            return;
-        }
 
-        if (!user?.id) {
-            Alert.alert("Error", "Please log in to download episodes");
-            return;
-        }
-
-        const episodeId = item.episode.id;
-        setDownloadingEpisodes(prev => new Set(prev).add(episodeId));
-
+    const handleSignOut = async (navigation: any) => {
         try {
-            // Download the file
-            await DownloadService.downloadAudio(
-                user.id,
-                episodeId,
-                audioUrl,
-                item.episode.title,
-                (progress) => {
-                    const percent = progress.progress;
-                    console.log(`Download progress: ${(percent * 100).toFixed(0)}%`);
-                    setDownloadProgress(prev => new Map(prev).set(episodeId, percent));
-                }
-            );
+            // 🔹 Stop audio playback and clear playlist
+            await TrackPlayer.stop();
+            await TrackPlayer.reset();
 
-            // Cache episode metadata for offline access
-            await DownloadService.cacheEpisodeMetadata(episodeId, {
-                title: item.episode.title,
-                description: item.episode.description,
-                image_url: item.episode.image_url,
-                pub_date: item.episode.pub_date,
-                audio_url: audioUrl,
-            });
+            // 🔹 Clear AsyncStorage and Redux state
+            await AsyncStorage.clear();
+            store.dispatch(setLoggedOut());
 
-            // Save to database with 'downloaded' status
-            await DatabaseService.addToLibrary(user.id, {
-                id: episodeId,
-                title: item.episode.title,
-                description: item.episode.description,
-                audioUrl: audioUrl,
-                image: item.episode.image_url,
-                pubDate: item.episode.pub_date,
-            }, 'downloaded');
+            // 🔹 Navigate to Register screen
+            navigation.replace("Register");
 
-            Alert.alert("Success", "Episode downloaded successfully!");
+            // 🔹 Sign out from Supabase
+            const { error } = await supabase.auth.signOut();
+            if (error) console.log("Supabase sign out failed:", error.message);
 
-            // Mark as downloaded
-            setDownloadedEpisodes(prev => new Set(prev).add(episodeId));
         } catch (error: any) {
-            console.error("Download error:", error);
-            Alert.alert("Download Failed", error.message || "Failed to download episode");
-        } finally {
-            setDownloadingEpisodes(prev => {
-                const newSet = new Set(prev);
-                newSet.delete(episodeId);
-                return newSet;
-            });
-            // Clear progress
-            setDownloadProgress(prev => {
-                const newMap = new Map(prev);
-                newMap.delete(episodeId);
-                return newMap;
-            });
+            Alert.alert("Error", error.message || "Something went wrong during sign out.");
         }
     };
 
@@ -285,20 +238,9 @@ export default function EditProfile({ navigation }: Props) {
                         <Text style={styles.headerTitle}>Edit Profile</Text>
 
                         <View style={{ width: 26 }}>
+
                             <TouchableOpacity
-                                onPress={async () => {
-                                    try {
-                                        const { error } = await supabase.auth.signOut();
-                                        if (error) throw error;
-
-                                        store.dispatch(setLoggedOut());
-
-                                        navigation.replace("Register");
-                                    } catch (error: any) {
-                                        Alert.alert("Error", error.message);
-                                    }
-                                }}
-                                style={{ width: 26 }}
+                                onPress={() => handleSignOut(navigation)}
                             >
                                 <Ionicons name="log-out-outline" size={26} color="#000" style={{ marginTop: 30 }} />
                             </TouchableOpacity>
@@ -411,13 +353,12 @@ export default function EditProfile({ navigation }: Props) {
                                     <View style={styles.recentPlayCard}>
                                         <PodcastCard
                                             item={item}
-                                            onPlay={() => navigation.navigate("Player", {
-                                                episodes: allEpisodes,
-                                                index
-                                            })}
-                                            onDownload={() => handleDownload(item)}
-                                            downloading={downloadingEpisodes.has(episodeId)}
-                                            downloadProgress={downloadProgress.get(episodeId) || 0}
+                                            onPlay={() => navigation.navigate("Player", { episodes: allEpisodes, index })}
+                                            onDownloadComplete={() => {
+                                                // Refresh downloaded episodes
+                                                fetchProfileData();
+                                            }}
+                                            userId={user?.id}
                                             isDownloaded={downloadedEpisodes.has(episodeId)}
                                         />
                                     </View>

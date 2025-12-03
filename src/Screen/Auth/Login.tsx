@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, TextInput, KeyboardAvoidingView, Platform, Alert } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, TextInput, KeyboardAvoidingView, Platform, Alert, ImageBackground, ActivityIndicator } from "react-native";
 import FontAwesome6 from "react-native-vector-icons/FontAwesome6";
 import { supabase } from "../../supabase";
 import { useAppDispatch } from "../../redux/hooks";
@@ -61,6 +61,12 @@ export default function Login({ navigation }: Props) {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
         <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
           <View style={styles.container}>
+
+            <Image source={require("../../assets/headphone-dynamic-gradient.png")} style={styles.background} />
+
+            <Text style={styles.bgTextTop}>NCAS</Text>
+            <Text style={styles.bgTextBottom}>CAST</Text>
+
             {/*===== LOGO =====*/}
             <Image source={require("../../assets/logo.png")} style={styles.logo} resizeMode="contain" />
 
@@ -97,8 +103,12 @@ export default function Login({ navigation }: Props) {
               </View>
 
               {/*===== Login Button ===== */}
-              <TouchableOpacity style={styles.loginBtn} onPress={handleLogin}>
-                <Text style={styles.loginText}>{isLoading ? "Logging In......" : "Login"}</Text>
+              <TouchableOpacity style={styles.loginBtn} onPress={handleLogin} disabled={isLoading} >
+                {isLoading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.loginText}>Sign In</Text>
+                )}
               </TouchableOpacity>
 
               {/*==== Navigation to Register Page =====*/}
@@ -116,6 +126,34 @@ export default function Login({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  background: {
+    width: "100%",
+    height: "100%",
+    position: "absolute",
+    top: 0,
+    left: 0,
+    resizeMode: "cover",
+
+  },
+  bgTextTop: {
+    position: "absolute",
+    top: 161,
+    left: 35,
+    fontSize: 135,
+    fontFamily: "PublicSans-ExtraBold",
+    color: "#FFFFFF80",
+    opacity: 0.7,
+  },
+  bgTextBottom: {
+    position: "absolute",
+    top: 282,
+    left: -80,
+    fontSize: 135,
+    fontFamily: "PublicSans-ExtraBold",
+    color: "#FFFFFF80",
+    opacity: 0.7,
+  },
+
   container: { flex: 1, backgroundColor: "#fff", alignItems: "center" },
   inputBox: { flexDirection: "row", alignItems: "center", backgroundColor: "#EDEDED", borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 12 },
   input: { flex: 1, fontSize: 15, color: "#A637FF" },
