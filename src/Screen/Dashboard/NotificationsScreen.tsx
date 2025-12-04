@@ -45,9 +45,7 @@ const NotificationsScreen = () => {
     };
 
     const handleNotificationPress = (item: NotificationItem) => {
-        console.log('🔔 Notification clicked:', item);
-        console.log('📦 Notification data:', item.data);
-
+       
         if (item.data && (item.data.type === 'new_episode' || item.data.episode_url)) {
             // Navigate to player if it's an episode notification
             const audioUrl = item.data.episode_url || item.data.audioUrl || '';
@@ -70,7 +68,7 @@ const NotificationsScreen = () => {
                 },
             };
 
-            console.log('🎵 Navigating to Player with episode:', episode);
+           
             navigation.navigate('Player', { episode });
         } else {
             console.log('⚠️ Not an episode notification or missing data');

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, Alert, ActivityIndicator, Dimensions } from "react-native";
+import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, Alert, ActivityIndicator, Dimensions, ToastAndroid } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Slider from "@react-native-community/slider";
@@ -130,7 +130,7 @@ export default function PlayerScreen({ navigation, route }: Props) {
 
   const toggleLike = async () => {
     if (!user?.id) {
-      Alert.alert("Sign In Required", "Please sign in to like episodes.");
+      ToastAndroid.show("Sign In Required, Please sign in to like episodes.",ToastAndroid.LONG);
       return;
     }
     try {
@@ -145,7 +145,6 @@ export default function PlayerScreen({ navigation, route }: Props) {
         dispatch(setLikeStatus(true));
       }
     } catch (e) {
-      console.error("Error toggling like:", e);
       Alert.alert("Error", "Could not update like status.");
     }
   };
@@ -165,15 +164,15 @@ export default function PlayerScreen({ navigation, route }: Props) {
           }
         }
 
-        // ⚠️ STEP 1 — CHECK IF TRACK ALREADY PLAYING (IMPORTANT)
+        //CHECK IF TRACK ALREADY PLAYING 
+
         const activeTrack = await TrackPlayer.getActiveTrack();
         const currentMeta = episodes[startIndex];
 
         // Extract episode ID from both URLs to compare (handles both local and online URLs)
         const getEpisodeId = (url: string) => {
           if (!url) return null;
-          // For local files: /data/.../p0mjs904.mp3.mp3 -> p0mjs904.mp3
-          // For online URLs: http://.../vpid/p0mjs904.mp3 -> p0mjs904.mp3
+          
           const parts = url.split('/');
           const filename = parts[parts.length - 1];
           return filename.replace('.mp3.mp3', '.mp3').replace('.mp3', '');
@@ -182,24 +181,18 @@ export default function PlayerScreen({ navigation, route }: Props) {
         const activeEpisodeId = getEpisodeId(activeTrack?.url || '');
         const currentEpisodeId = getEpisodeId(currentMeta?.audioUrl || '');
 
-        console.log("🔍 DEBUG - Active Episode ID:", activeEpisodeId);
-        console.log("🔍 DEBUG - Current Episode ID:", currentEpisodeId);
-        console.log("🔍 DEBUG - Are they equal?", activeEpisodeId === currentEpisodeId);
-
         // Check if same track is already playing by comparing episode IDs
         if (activeTrack && currentMeta && activeEpisodeId && currentEpisodeId && activeEpisodeId === currentEpisodeId) {
-          console.log("🔥 SAME TRACK ALREADY PLAYING — SKIPPING RESET");
+
           // Just sync the local state with what's already playing
           const state = await TrackPlayer.getPlaybackState();
           setIsPlaying(state.state === State.Playing);
           setCurrentIndex(startIndex);
           dispatch(setPlaylist({ episodes, index: startIndex }));
-          return; // ←←← THIS PREVENTS RESTART
+          return; // THIS PREVENTS RESTART
         }
 
-        console.log("⚠️ Different track detected, will reset and play new track");
-
-        // STEP 2 — Build track list
+    // Build track list
         let downloadedMap = new Map<string, string>();
         if (user?.id) {
           try {
@@ -216,7 +209,7 @@ export default function PlayerScreen({ navigation, route }: Props) {
 
         const tracks = await Promise.all(episodes.map(async (ep, i) => {
           let audioSource = ep.audioUrl;
-          let episodeData = ep; // Start with provided episode data
+          let episodeData = ep; 
 
           const safeEpisodeId = ep.audioUrl?.split('/').pop()?.split('?')[0];
           if (safeEpisodeId && downloadedMap.has(safeEpisodeId)) {
@@ -246,11 +239,6 @@ export default function PlayerScreen({ navigation, route }: Props) {
           };
         }));
 
-        // STEP 3 — ADD TRACKS ONLY IF DIFFERENT FROM CURRENT PLAYBACK
-        console.log("🎧 Adding playlist fresh...");
-        console.log("🎵 Total tracks to add:", tracks.length);
-        console.log("🎵 First track URL:", tracks[0]?.url);
-        console.log("🎵 First track title:", tracks[0]?.title);
 
         await TP.reset();
         await TP.add(tracks);
@@ -286,8 +274,7 @@ export default function PlayerScreen({ navigation, route }: Props) {
     return () => {
       mounted = false;
       clearInterval(interval);
-      // Keep playback alive when navigating away - don't stop/reset
-      // The mini player will control playback
+      
     };
   }, []);
 

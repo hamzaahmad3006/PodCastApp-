@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, KeyboardAvoidingView, Platform, TextInput, Alert, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, KeyboardAvoidingView, Platform, TextInput, Alert, ActivityIndicator, ToastAndroid } from "react-native";
 import FontAwesome6 from "react-native-vector-icons/FontAwesome6";
 import { supabase } from "../../supabase";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -60,13 +60,13 @@ export default function RegisterForm({ navigation }: Props) {
                 }
             }
 
-            Alert.alert("Success", `User registered: ${data.user?.email}`);
-            console.log("Registered user:", data.user);
+            ToastAndroid.show(`User registered: ${data.user?.email}`, ToastAndroid.LONG);
+           
 
             navigation.navigate("Login");
 
         } catch (err) {
-            console.log("Unexpected error:", err);
+           
             Alert.alert("Error", "Something went wrong. Please try again.");
         } finally {
             setIsLoading(false);

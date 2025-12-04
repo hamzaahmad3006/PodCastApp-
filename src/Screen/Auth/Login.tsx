@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, TextInput, KeyboardAvoidingView, Platform, Alert, ImageBackground, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, TextInput, KeyboardAvoidingView, Platform, Alert, ImageBackground, ActivityIndicator, ToastAndroid } from "react-native";
 import FontAwesome6 from "react-native-vector-icons/FontAwesome6";
 import { supabase } from "../../supabase";
 import { useAppDispatch } from "../../redux/hooks";
@@ -48,7 +48,7 @@ export default function Login({ navigation }: Props) {
           })
         );
       }
-
+      ToastAndroid.show("Login Successful", ToastAndroid.SHORT);
     } catch (error: any) {
       Alert.alert("Login Error", error.message);
     } finally {

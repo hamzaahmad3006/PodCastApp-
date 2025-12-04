@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { View, Text, StyleSheet, TextInput, Image, ScrollView, TouchableOpacity, Alert, ActivityIndicator, RefreshControl, Modal } from "react-native";
+import { View, Text, StyleSheet, TextInput, Image, ScrollView, TouchableOpacity, Alert, ActivityIndicator, RefreshControl, Modal, ToastAndroid } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import FontAwesome6 from "react-native-vector-icons/FontAwesome6";
 import { useFocusEffect } from "@react-navigation/native";
@@ -54,13 +54,6 @@ export default function EditProfile({ navigation }: Props) {
                 DatabaseService.getLibrary(user?.id, 'history'),
                 DownloadService.getDownloadedEpisodes(user?.id)
             ]);
-
-            console.log("Profile: Database fetches complete.", {
-                stats: statsData,
-                historyCount: historyData?.length,
-                downloadedCount: downloadedData?.length
-            });
-
             setStats(statsData);
 
             // Remove duplicates - keep only the most recent occurrence of each episode
@@ -121,7 +114,7 @@ export default function EditProfile({ navigation }: Props) {
             if (response.didCancel) {
                 console.log('User cancelled image picker');
             } else if (response.errorCode) {
-                console.log('ImagePicker Error: ', response.errorMessage);
+
                 Alert.alert('Error', response.errorMessage);
             } else if (response.assets && response.assets.length > 0) {
                 const asset = response.assets[0];
@@ -131,9 +124,9 @@ export default function EditProfile({ navigation }: Props) {
 
                     // Upload to Supabase
                     if (!user?.id) throw new Error("User ID not found");
-                    console.log('Starting avatar upload for user:', user.id);
+
                     const newAvatarUrl = await DatabaseService.uploadAvatar(user.id, asset.uri, fileName);
-                    console.log('Avatar uploaded successfully. New URL:', newAvatarUrl);
+
 
                     // Update Redux - ensure both avatar_url and user_metadata.avatar_url are updated
                     const updatedUser = {
@@ -144,13 +137,11 @@ export default function EditProfile({ navigation }: Props) {
                             avatar_url: newAvatarUrl
                         }
                     };
-
-                    console.log('Updating Redux with new avatar URL');
                     dispatch(setLoggedIn(updatedUser));
 
-                    Alert.alert('Success', 'Profile picture updated!');
+                    ToastAndroid.show('Profile picture updated!', ToastAndroid.LONG);
                 } catch (error: any) {
-                    console.error('Upload error:', error);
+
                     Alert.alert('Error', 'Failed to upload image');
                 } finally {
                     setLoading(false);
@@ -189,7 +180,7 @@ export default function EditProfile({ navigation }: Props) {
                 display_name: username,
             }));
 
-            Alert.alert("Success", "Profile updated successfully!");
+            ToastAndroid.show("Profile updated successfully!", ToastAndroid.LONG);
         } catch (error: any) {
             console.error("Error updating profile:", error);
             Alert.alert("Error", error.message || "Failed to update profile");
@@ -199,18 +190,17 @@ export default function EditProfile({ navigation }: Props) {
 
     const handleSignOut = async (navigation: any) => {
         try {
-            // 🔹 Stop audio playback and clear playlist
-            await TrackPlayer.stop();
-            await TrackPlayer.reset();
-
-            // 🔹 Clear AsyncStorage and Redux state
             await AsyncStorage.clear();
+
             store.dispatch(setLoggedOut());
 
-            // 🔹 Navigate to Register screen
-            navigation.replace("Register");
+            await TrackPlayer.reset();
+            await TrackPlayer.pause();
+            await TrackPlayer.stop();
 
-            // 🔹 Sign out from Supabase
+            navigation.replace("Register");
+            ToastAndroid.show("Signed out successfully", ToastAndroid.LONG);
+
             const { error } = await supabase.auth.signOut();
             if (error) console.log("Supabase sign out failed:", error.message);
 
@@ -252,7 +242,7 @@ export default function EditProfile({ navigation }: Props) {
 
                     <View style={{ alignItems: "center", marginTop: 40 }}>
 
-                        {/* AVATAR SECTION */}
+                        {/*==== AVATAR SECTION =====*/}
                         <View style={styles.avatarWrapper}>
                             <StripeBackground />
                             <TouchableOpacity onPress={() => setShowAvatarModal(true)} activeOpacity={0.8}>
@@ -265,7 +255,7 @@ export default function EditProfile({ navigation }: Props) {
                                     style={styles.avatar}
                                 />
                             </TouchableOpacity>
-                            {/* Edit Avatar Button */}
+                            {/*====== Edit Avatar Button ======*/}
                             <TouchableOpacity
                                 style={styles.editAvatarBtn}
                                 onPress={() => {
@@ -305,7 +295,7 @@ export default function EditProfile({ navigation }: Props) {
                                     <Text style={styles.statLabel}>Liked Podcasts</Text>
                                 </View>
 
-                                {/* Vertical Divider */}
+                                {/*===== Vertical Divider =======*/}
                                 <View style={styles.statDivider} />
 
                                 <View style={styles.statBox}>
@@ -368,13 +358,13 @@ export default function EditProfile({ navigation }: Props) {
                     )}
                 </ScrollView>
 
-                {/* SAVE BUTTON */}
+                {/*====== SAVE BUTTON ======*/}
                 <TouchableOpacity style={styles.saveBtn} onPress={handleSaveChanges}>
                     <Text style={styles.saveText}>Save Changes</Text>
                 </TouchableOpacity>
             </View>
 
-            {/* Avatar Viewer Modal */}
+            {/*====== Avatar Viewer Modal =====*/}
             <Modal
                 visible={showAvatarModal}
                 transparent={true}

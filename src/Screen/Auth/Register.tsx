@@ -45,7 +45,7 @@ export default function Register({ navigation }: Props) {
       const { data, error } = await supabase.auth.signInWithIdToken({
         provider: "google",
         token: res.data.idToken,
-        access_token: res.data.serverAuthCode || res.data.idToken, // Use serverAuthCode if available
+        access_token: res.data.serverAuthCode || res.data.idToken, 
       });
 
       if (error) {
@@ -105,7 +105,7 @@ export default function Register({ navigation }: Props) {
         return;
       }
 
-      // Yahan supabase ka call lagega ↓
+      // idhar supabase ka call laga
       const { data, error } = await supabase.auth.signInWithIdToken({
         provider: "apple",
         token: identityToken,
