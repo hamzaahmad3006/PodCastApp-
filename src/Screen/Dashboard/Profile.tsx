@@ -17,6 +17,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import StripeBackground from "../../components/StripeLine";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import TrackPlayer from "react-native-track-player";
+import { clearPlayer } from "../../redux/playerSlice";
 
 
 interface Props {
@@ -193,6 +194,7 @@ export default function EditProfile({ navigation }: Props) {
             await AsyncStorage.clear();
 
             store.dispatch(setLoggedOut());
+            store.dispatch(clearPlayer());
 
             await TrackPlayer.reset();
             await TrackPlayer.pause();

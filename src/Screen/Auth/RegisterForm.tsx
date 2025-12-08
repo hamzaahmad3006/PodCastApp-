@@ -61,12 +61,12 @@ export default function RegisterForm({ navigation }: Props) {
             }
 
             ToastAndroid.show(`User registered: ${data.user?.email}`, ToastAndroid.LONG);
-           
+
 
             navigation.navigate("Login");
 
         } catch (err) {
-           
+
             Alert.alert("Error", "Something went wrong. Please try again.");
         } finally {
             setIsLoading(false);
@@ -85,12 +85,11 @@ export default function RegisterForm({ navigation }: Props) {
                     keyboardShouldPersistTaps="handled"
                 >
 
-                    <Image source={require("../../assets/headphone-dynamic-gradient.png")} style={styles.background} />
-
-                    <Text style={styles.bgTextTop}>NCAS</Text>
-                    <Text style={styles.bgTextBottom}>CAST</Text>
-
                     <View style={styles.container}>
+                        <Image source={require("../../assets/headphone-dynamic-gradient.png")} style={styles.background} />
+
+                        <Text style={styles.bgTextTop}>NCAS</Text>
+                        <Text style={styles.bgTextBottom}>CAST</Text>
                         {/*===== LOGO =====*/}
                         <Image
                             source={require("../../assets/logo.png")}
@@ -110,12 +109,12 @@ export default function RegisterForm({ navigation }: Props) {
 
                             {/*======= Name INput ======== */}
                             <View style={styles.inputBox}>
-                                <FontAwesome6 name="user" size={20} color="#A637FF" style={{ marginRight: 10 }} />
+                                <FontAwesome6 name="user" size={20} color="#000" style={{ marginRight: 10 }} />
 
                                 <TextInput
                                     style={styles.input}
                                     placeholder="Enter your Name"
-                                    placeholderTextColor="#A637FF"
+                                    placeholderTextColor="#000"
                                     value={name}
                                     onChangeText={setName}
                                 />
@@ -123,11 +122,11 @@ export default function RegisterForm({ navigation }: Props) {
                             </View>
                             {/*======= Email INput ======== */}
                             <View style={styles.inputBox}>
-                                <FontAwesome6 name="envelope" size={20} color="#A637FF" style={{ marginRight: 10 }} />
+                                <FontAwesome6 name="envelope" size={20} color="#000" style={{ marginRight: 10 }} />
 
                                 <TextInput style={styles.input}
                                     placeholder="Enter your Email"
-                                    placeholderTextColor="#A637FF"
+                                    placeholderTextColor="#000"
                                     keyboardType="email-address"
                                     autoCapitalize="none"
                                     value={email}
@@ -136,11 +135,11 @@ export default function RegisterForm({ navigation }: Props) {
                             </View>
                             {/*======= Password INput ======== */}
                             <View style={styles.inputBox}>
-                                <FontAwesome6 name="lock" size={20} color="#A637FF" style={{ marginRight: 10 }} />
+                                <FontAwesome6 name="lock" size={20} color="#000" style={{ marginRight: 10 }} />
 
                                 <TextInput style={styles.input}
                                     placeholder="Enter your Password"
-                                    placeholderTextColor="#A637FF"
+                                    placeholderTextColor="#000"
                                     secureTextEntry
                                     value={password}
                                     onChangeText={setPassword}
@@ -167,12 +166,12 @@ export default function RegisterForm({ navigation }: Props) {
 
 
                             {/*==== Navigation to Register Page =====*/}
-                            {/* <TouchableOpacity onPress={() => navigation.navigate("Register")}>
-                            <Text style={styles.registerText}>
-                                Create a new account?{" "}
-                                <Text style={styles.registerLink}>Register</Text>
-                            </Text>
-                        </TouchableOpacity> */}
+                            <TouchableOpacity onPress={() => navigation.navigate("Login")}>
+                                <Text style={styles.registerText}>
+                                    Create a new account?{" "}
+                                    <Text style={styles.registerLink}>Singin</Text>
+                                </Text>
+                            </TouchableOpacity>
                         </View>
                     </View>
                 </ScrollView>
@@ -224,12 +223,16 @@ const styles = StyleSheet.create({
         paddingHorizontal: 14,
         paddingVertical: 10,
         marginBottom: 12,
+        borderWidth: 1,
+        borderColor: '#A637FF',
+        color: "#000"
     },
 
     input: {
         flex: 1,
         fontSize: 15,
-        color: "#A637FF",
+        color: "#000",
+        fontFamily: 'Manrope-Medium'
     },
 
 
@@ -259,18 +262,19 @@ const styles = StyleSheet.create({
     emailInput: {
         flexDirection: "row",
         backgroundColor: "#EDEDED",
-        color: "#A637FF",
+        color: "#000",
         padding: 14,
         paddingVertical: 20,
         borderRadius: 10,
         alignItems: "center",
         justifyContent: "center",
+        fontFamily: 'Manrope-Medium'
     },
 
     emailText: {
         fontSize: 16,
         marginLeft: 8,
-        fontWeight: "600",
+        fontFamily: 'Manrope-Medium'
     },
 
     orText: {
@@ -288,24 +292,24 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         alignItems: "center",
         justifyContent: "center",
-        marginBottom: 12,
+        marginBottom: 2,
     },
 
     loginText: {
         fontSize: 16,
         marginLeft: 10,
-        fontWeight: "600",
+        fontFamily: 'Manrope-Medium',
         color: 'white'
     },
 
     registerText: {
         textAlign: "center",
-        marginTop: 10,
+        // marginTop: 10,
         fontSize: 14,
     },
 
     registerLink: {
         color: "#A637FF",
-        fontWeight: "700",
+        fontFamily: 'Manrope-Medium',
     },
 });

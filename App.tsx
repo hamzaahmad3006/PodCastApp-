@@ -13,9 +13,9 @@ export default function App() {
   useEffect(() => {
     // Initialize Notifications
     try {
-      console.log("App.tsx: Starting NotificationService.initialize()");
+
       NotificationService.initialize();
-      console.log("App.tsx: Finished NotificationService.initialize()");
+
     } catch (error) {
       console.error("App.tsx: Notification initialization failed:", error);
     }
