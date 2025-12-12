@@ -21,15 +21,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import PodcastCard from '../../components/PodCastCard';
 import { setPlaylist } from '../../redux/playerSlice';
 import { COLORS } from '../../constants/colors';
-import { RootState } from '../../types';
+import { RootState, Episode } from '../../types';
 
-interface Episode {
-  title: string;
-  description: string;
-  pubDate: string;
-  audioUrl: string | null;
-  image: string;
-}
 
 const podcasts = [
   {
