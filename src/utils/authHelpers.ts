@@ -3,12 +3,13 @@ import { store } from '../redux/store';
 import { setLoggedIn } from '../redux/authSlice';
 import { loadNotifications } from '../redux/notificationSlice';
 import { NotificationDatabaseService } from '../services/NotificationDatabaseService';
+import { User, UserProfile } from '../types';
 import { DownloadService } from '../services/DownloadService';
 
 /**
  * Dispatch user login to Redux store
  */
-export const dispatchUserLogin = (user: any, profileData?: any) => {
+export const dispatchUserLogin = (user: User, profileData?: UserProfile | null) => {
     store.dispatch(setLoggedIn({
         id: user.id,
         email: user.email,
@@ -24,7 +25,7 @@ export const dispatchUserLogin = (user: any, profileData?: any) => {
 /**
  * Load user profile, notifications, and run cleanup tasks
  */
-export const loadUserProfile = async (userId: string, user: any) => {
+export const loadUserProfile = async (userId: string, user: User) => {
     try {
         // Fetch profile from database
         const { data: profileData, error } = await supabase
@@ -57,10 +58,13 @@ export const loadUserProfile = async (userId: string, user: any) => {
 /**
  * Handle auth session - dispatch user and load profile in background
  */
-export const handleAuthSession = async (user: any) => {
+export const handleAuthSession = async (user: User) => {
     // Dispatch immediately to unblock UI
     dispatchUserLogin(user);
 
     // Load profile in background (fire and forget)
-    loadUserProfile(user.id, user);
+    // Load profile in background (fire and forget)
+    if (user.id) {
+        loadUserProfile(user.id, user);
+    }
 };

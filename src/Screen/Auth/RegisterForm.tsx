@@ -15,13 +15,10 @@ import {
 } from 'react-native';
 import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
 import { supabase } from '../../supabase';
+import { ScreenProps } from '../../types';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-interface Props {
-  navigation: any;
-}
-
-export default function RegisterForm({ navigation }: Props) {
+export default function RegisterForm({ navigation }: ScreenProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -73,7 +70,7 @@ export default function RegisterForm({ navigation }: Props) {
       );
 
       navigation.navigate('Login');
-    } catch (err) {
+    } catch (err: unknown) {
       Alert.alert('Error', 'Something went wrong. Please try again.');
     } finally {
       setIsLoading(false);

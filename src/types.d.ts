@@ -29,7 +29,13 @@ export interface EpisodeMetadata {
 export interface User {
   id?: string;
   email?: string;
-  user_metadata?: Record<string, unknown>;
+  user_metadata?: {
+    display_name?: string;
+    avatar_url?: string;
+    full_name?: string;
+    name?: string;
+    [key: string]: unknown;
+  };
   display_name?: string;
   // Supabase User compatibility
   app_metadata?: Record<string, unknown>;
@@ -99,6 +105,7 @@ export interface DownloadedEpisode {
   local_path: string;
   file_size: number;
   downloaded_at: string;
+  episode?: Episode;
 }
 
 export interface DownloadState {
@@ -137,6 +144,23 @@ export interface NotificationData {
   [key: string]: unknown;
 }
 
+// =========ONESIGNAL TYPES================
+
+export interface OneSignalNotification {
+  notificationId: string;
+  title?: string;
+  body?: string;
+  additionalData?: NotificationData;
+}
+
+export interface OneSignalClickEvent {
+  notification: OneSignalNotification;
+}
+
+export interface OneSignalForegroundEvent {
+  getNotification: () => OneSignalNotification;
+}
+
 // =========NAVIGATION TYPES================
 
 export type TabParamList = {
@@ -148,8 +172,8 @@ export type TabParamList = {
 
 export type MainStackParamList = {
   Tabs: undefined;
-  Player: undefined; // Params mostly handled via reducer or simple obj
-  AllEpisodes: undefined;
+  Player: { episodes?: Episode[]; index?: number; episode?: Episode };
+  AllEpisodes: { episodes?: Episode[] };
   Notifications: undefined;
 };
 
@@ -174,6 +198,7 @@ export interface PodcastCardProps {
 export interface ScreenProps {
   navigation: {
     navigate: (screen: string, params?: Record<string, unknown>) => void;
+    replace: (screen: string, params?: Record<string, unknown>) => void;
     goBack: () => void;
     [key: string]: unknown;
   };

@@ -15,14 +15,11 @@ import appleAuth from '@invertase/react-native-apple-authentication';
 import { supabase } from '../../supabase';
 import { useAppDispatch } from '../../redux/hooks';
 import { setLoggedIn } from '../../redux/authSlice';
+import { ScreenProps } from '../../types';
 import { GOOGLE_WEB_CLIENT_ID } from '@env';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-interface Props {
-  navigation: any;
-}
-
-export default function Register({ navigation }: Props) {
+export default function Register({ navigation }: ScreenProps) {
   const dispatch = useAppDispatch();
 
   const handleRegister = (): void => {
@@ -95,8 +92,8 @@ export default function Register({ navigation }: Props) {
       //Navigate to Home
       navigation.replace('Root');
       ToastAndroid.show('Welcome to PodApp ', ToastAndroid.LONG);
-    } catch (error: any) {
-      Alert.alert('Error', error.message);
+    } catch (error: unknown) {
+      Alert.alert('Error', (error as Error).message);
     }
   };
 

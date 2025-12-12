@@ -9,7 +9,7 @@ export type { DownloadProgress, DownloadedEpisode };
 export const DownloadService = {
   CACHE_SIZE_LIMIT: 500 * 1024 * 1024,
 
-  activeDownloads: new Map<string, { jobId: number; promise: Promise<any> }>(),
+  activeDownloads: new Map<string, { jobId: number; promise: Promise<RNFS.DownloadResult> }>(),
 
   getDownloadDirectory(): string {
     return `${RNFS.DocumentDirectoryPath}/downloads`;
@@ -36,7 +36,7 @@ export const DownloadService = {
   },
   /** Generate a safe filename from episode ID and optional audio URL */
   getSafeFilename(episodeId: string, audioUrl?: string): string {
-    // Remove any existing extension from episodeId first
+
     const cleanEpisodeId = episodeId.replace(/\.(mp3|m4a|wav|aac)$/i, '');
 
     // Fallback to .mp3 if audioUrl is missing or malformed
@@ -253,7 +253,7 @@ export const DownloadService = {
     if (task) {
       RNFS.stopDownload(task.jobId);
       this.activeDownloads.delete(episodeId);
-      // Attempt to delete any partially downloaded file
+
       const filename = `${episodeId}.mp3`;
       const filePath = this.getFilePath(filename);
       try {

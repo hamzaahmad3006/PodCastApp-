@@ -14,15 +14,15 @@ import {
   NotificationItem,
 } from '../../redux/notificationSlice';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { NotificationDatabaseService } from '../../services/NotificationDatabaseService';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '../../constants/colors';
-import { RootState } from '../../types';
+import { RootState, MainStackParamList, Episode } from '../../types';
 
 const NotificationsScreen = () => {
   const dispatch = useAppDispatch();
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<NavigationProp<MainStackParamList>>();
   const { notifications } = useAppSelector(
     (state: RootState) => state.notifications,
   );
@@ -71,21 +71,14 @@ const NotificationsScreen = () => {
           ? audioUrl.split('/').pop()?.split('?')[0] || `ep_${Date.now()}`
           : `ep_${Date.now()}`;
 
-      const episode = {
+      const episode: Episode = {
         id: id,
         title: item.data.episode_title || item.title,
         description: item.data.description || '',
         audioUrl: audioUrl,
-        enclosure: {
-          url: audioUrl,
-          type: 'audio/mpeg',
-        },
         image: item.data.image || 'https://via.placeholder.com/150',
-        pubDate: item.data.pub_date || new Date().toISOString(),
-        itunes: {
-          image: item.data.image || 'https://via.placeholder.com/150',
-          duration: item.data.duration || '0:00',
-        },
+        pubDate: (item.data.pub_date as string) || new Date().toISOString(),
+        duration: item.data.duration || '0:00',
       };
 
       navigation.navigate('Player', { episode });

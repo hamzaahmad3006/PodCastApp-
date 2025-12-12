@@ -14,8 +14,8 @@ import {
   ToastAndroid,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { useFocusEffect } from '@react-navigation/native';
-import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import { useFocusEffect, NavigationProp } from '@react-navigation/native';
+import { launchCamera, launchImageLibrary, ImageLibraryOptions, ImagePickerResponse, CameraOptions } from 'react-native-image-picker';
 
 import { useAppSelector, useAppDispatch } from '../../redux/hooks';
 import { supabase } from '../../supabase';
@@ -23,6 +23,7 @@ import { setLoggedOut, setLoggedIn } from '../../redux/authSlice';
 import { store } from '../../redux/store';
 import { DatabaseService, LibraryItem } from '../../services/database';
 import { DownloadService } from '../../services/DownloadService';
+import { DownloadedEpisode, MainStackParamList, Episode, ScreenProps } from '../../types';
 import { DownloadManager } from '../../controller/DownloadManager';
 import PodcastCard from '../../components/PodCastCard';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -31,11 +32,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import TrackPlayer from 'react-native-track-player';
 import { clearPlayer } from '../../redux/playerSlice';
 
-interface Props {
-  navigation: any;
-}
 
-export default function EditProfile({ navigation }: Props) {
+
+export default function EditProfile({ navigation }: ScreenProps) {
   const { user } = useAppSelector(state => state.auth);
   const dispatch = useAppDispatch();
 
@@ -91,10 +90,10 @@ export default function EditProfile({ navigation }: Props) {
 
       // Set downloaded episodes
       const downloadedIds = new Set(
-        downloadedData.map((d: any) => d.episode_id),
+        downloadedData.map((d: DownloadedEpisode) => d.episode_id),
       );
       setDownloadedEpisodes(downloadedIds);
-    } catch (error: any) {
+    } catch (error: unknown) {
       Alert.alert(
         'Error',
         'Failed to load profile data. Pull down to refresh.',
@@ -128,14 +127,14 @@ export default function EditProfile({ navigation }: Props) {
   const handleImagePicker = async (type: 'camera' | 'library') => {
     if (!user?.id) return;
 
-    const options: any = {
+    const options: CameraOptions | ImageLibraryOptions = {
       mediaType: 'photo',
       quality: 0.8,
       maxWidth: 500,
       maxHeight: 500,
     };
 
-    const callback = async (response: any) => {
+    const callback = async (response: ImagePickerResponse) => {
       if (response.didCancel) {
 
       } else if (response.errorCode) {
@@ -148,6 +147,7 @@ export default function EditProfile({ navigation }: Props) {
 
           // Upload to Supabase
           if (!user?.id) throw new Error('User ID not found');
+          if (!asset.uri) throw new Error('Image URI not found');
 
           const newAvatarUrl = await DatabaseService.uploadAvatar(
             user.id,
@@ -167,7 +167,7 @@ export default function EditProfile({ navigation }: Props) {
           dispatch(setLoggedIn(updatedUser));
 
           ToastAndroid.show('Profile picture updated!', ToastAndroid.LONG);
-        } catch (error: any) {
+        } catch (error: unknown) {
           Alert.alert('Error', 'Failed to upload image');
         } finally {
           setLoading(false);
@@ -213,13 +213,13 @@ export default function EditProfile({ navigation }: Props) {
       );
 
       ToastAndroid.show('Profile updated successfully!', ToastAndroid.LONG);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating profile:', error);
-      Alert.alert('Error', error.message || 'Failed to update profile');
+      Alert.alert('Error', (error as Error).message || 'Failed to update profile');
     }
   };
 
-  const handleSignOut = async (navigation: any) => {
+  const handleSignOut = async (navigation: NavigationProp<MainStackParamList>) => {
     try {
       await AsyncStorage.clear();
 
@@ -235,10 +235,10 @@ export default function EditProfile({ navigation }: Props) {
 
       const { error } = await supabase.auth.signOut();
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       Alert.alert(
         'Error',
-        error.message || 'Something went wrong during sign out.',
+        (error as Error).message || 'Something went wrong during sign out.',
       );
     }
   };
@@ -383,7 +383,7 @@ export default function EditProfile({ navigation }: Props) {
                   <Text style={styles.recentPlayNumber}>{index + 1}.</Text>
                   <View style={styles.recentPlayCard}>
                     <PodcastCard
-                      item={(item.episode || item) as any}
+                      item={item.episode as Episode}
                       onPlay={() =>
                         navigation.navigate('Player', {
                           episodes: allEpisodes,

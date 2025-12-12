@@ -23,6 +23,7 @@ import {
 import { DatabaseService } from '../services/database';
 import { DownloadService } from '../services/DownloadService';
 import { navigationRef } from '../Appnavigation/Appnavigator';
+import { LibraryItem, DownloadedEpisode } from '../types';
 
 export default function MiniPlayer() {
   const dispatch = useAppDispatch();
@@ -55,12 +56,12 @@ export default function MiniPlayer() {
         const safeId = DatabaseService.getEpisodeIdFromUrl(
           currentEpisode.audioUrl || currentEpisode.id || '',
         );
-        const liked = library?.some((item: any) => item.episode_id === safeId);
+        const liked = library?.some((item: LibraryItem) => item.episode_id === safeId);
         dispatch(setLikeStatus(!!liked));
 
         // Check download status
         const downloads = await DownloadService.getDownloadedEpisodes(user.id);
-        const downloaded = downloads.some((d: any) => d.episode_id === safeId);
+        const downloaded = downloads.some((d: DownloadedEpisode) => d.episode_id === safeId);
         dispatch(setDownloadStatus(downloaded));
       } catch (e) {
 
@@ -112,7 +113,8 @@ export default function MiniPlayer() {
 
   const openPlayer = () => {
     if (navigationRef.isReady()) {
-      (navigationRef as any).navigate('Player', {
+      // @ts-ignore - Navigation types don't support nested params
+      navigationRef.navigate('Player', {
         episodes,
         index: currentIndex,
       });

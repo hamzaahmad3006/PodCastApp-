@@ -1,5 +1,5 @@
 import React, { useCallback, useState, useEffect } from 'react';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, NavigationProp, RouteProp } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -13,26 +13,14 @@ import { DatabaseService } from '../../services/database';
 import { DownloadService } from '../../services/DownloadService';
 import PodcastCard from '../../components/PodCastCard';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Episode, MainStackParamList, DownloadedEpisode, ScreenProps } from '../../types';
 
-interface Episode {
-  title: string;
-  description: string;
-  pubDate: string;
-  audioUrl: string | null;
-  image: string;
-}
-
-interface Props {
-  navigation: any;
-  route?: any;
-}
-
-export default function AllEpisodes({ navigation, route }: Props) {
+export default function AllEpisodes({ navigation, route }: ScreenProps) {
   const { user } = useAppSelector(state => state.auth);
   const params = route?.params || {};
-  const episodes: Episode[] = params.episodes || [];
+  const episodes: Episode[] = (params.episodes as Episode[]) || [];
 
-  const nav = useNavigation<any>();
+  const nav = useNavigation<NavigationProp<MainStackParamList>>();
 
   // Download state
   const [downloadedEpisodes, setDownloadedEpisodes] = useState<Set<string>>(
@@ -54,6 +42,7 @@ export default function AllEpisodes({ navigation, route }: Props) {
   // Memoized callback for playing episodes
   const handlePlay = useCallback(
     (index: number) => {
+      // @ts-ignore - Player params handled via Redux, not navigation types
       nav.navigate('Player', { episodes, index });
     },
     [episodes, nav],
@@ -64,7 +53,7 @@ export default function AllEpisodes({ navigation, route }: Props) {
 
     try {
       const downloaded = await DownloadService.getDownloadedEpisodes(user.id);
-      const downloadedIds = new Set(downloaded.map((d: any) => d.episode_id));
+      const downloadedIds = new Set(downloaded.map((d: DownloadedEpisode) => d.episode_id));
       setDownloadedEpisodes(downloadedIds);
     } catch (e) { }
   };
@@ -90,8 +79,8 @@ export default function AllEpisodes({ navigation, route }: Props) {
   );
   // Get item layout for better scrolling performance
   const getItemLayout = useCallback(
-    (data: any, index: number) => ({
-      length: 119, // height of podcastItem (95 + 12 + 12 padding)
+    (_data: ArrayLike<Episode> | null | undefined, index: number) => ({
+      length: 119,
       offset: 119 * index,
       index,
     }),

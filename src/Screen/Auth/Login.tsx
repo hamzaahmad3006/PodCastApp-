@@ -18,13 +18,10 @@ import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
 import { supabase } from '../../supabase';
 import { useAppDispatch } from '../../redux/hooks';
 import { setLoggedIn } from '../../redux/authSlice';
+import { ScreenProps } from '../../types';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-interface Props {
-  navigation: any;
-}
-
-export default function Login({ navigation }: Props) {
+export default function Login({ navigation }: ScreenProps) {
   const dispatch = useAppDispatch();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -70,8 +67,8 @@ export default function Login({ navigation }: Props) {
         );
       }
       ToastAndroid.show('Login Successful', ToastAndroid.SHORT);
-    } catch (error: any) {
-      Alert.alert('Login Error', error.message);
+    } catch (error: unknown) {
+      Alert.alert('Login Error', (error as Error).message);
     } finally {
       setIsLoading(false);
     }

@@ -9,7 +9,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useFocusEffect, NavigationProp } from '@react-navigation/native';
 import { useAppSelector, useAppDispatch } from '../../redux/hooks';
 import { DatabaseService } from '../../services/database';
 import { DownloadService } from '../../services/DownloadService';
@@ -18,15 +18,15 @@ import PodcastCard from '../../components/PodCastCard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { setPlaylist } from '../../redux/playerSlice';
 import { COLORS } from '../../constants/colors';
-import { LibraryItem } from '../../types';
+import { LibraryItem, MainStackParamList, DownloadedEpisode, Episode } from '../../types';
 
 export default function MyLibrary() {
   const dispatch = useAppDispatch();
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<NavigationProp<MainStackParamList>>();
   const { user } = useAppSelector(state => state.auth);
   const [activeTab, setActiveTab] = useState<'liked' | 'downloads'>('liked');
   const [libraryItems, setLibraryItems] = useState<LibraryItem[]>([]);
-  const [downloadedItems, setDownloadedItems] = useState<any[]>([]);
+  const [downloadedItems, setDownloadedItems] = useState<DownloadedEpisode[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [downloadedEpisodeIds, setDownloadedEpisodeIds] = useState<Set<string>>(
@@ -46,11 +46,11 @@ export default function MyLibrary() {
 
       // ALWAYS fetch downloaded IDs for checkmarks
       const downloads = await DownloadService.getDownloadedEpisodes(user.id);
-      const downloadIds = new Set(downloads.map((d: any) => d.episode_id));
+      const downloadIds = new Set(downloads.map((d: DownloadedEpisode) => d.episode_id));
       setDownloadedEpisodeIds(downloadIds);
 
       if (activeTab === 'downloads') {
-        const episodeIds = downloads.map((d: any) => d.episode_id);
+        const episodeIds = downloads.map((d: DownloadedEpisode) => d.episode_id);
         let episodesMap = new Map();
 
         if (episodeIds.length > 0) {
@@ -61,7 +61,7 @@ export default function MyLibrary() {
               .in('id', episodeIds);
 
             if (episodes) {
-              episodes.forEach((ep: any) => episodesMap.set(ep.id, ep));
+              episodes.forEach((ep: Episode) => episodesMap.set(ep.id, ep));
             }
           } catch (error) {
 
@@ -70,7 +70,7 @@ export default function MyLibrary() {
 
 
         const episodesWithDetails = await Promise.all(
-          downloads.map(async (download: any) => {
+          downloads.map(async (download: DownloadedEpisode) => {
             // 1. Try from batch result
             if (episodesMap.has(download.episode_id)) {
               return {
@@ -110,14 +110,14 @@ export default function MyLibrary() {
     }
   };
 
-  const handlePlay = (item: any, index: number) => {
+  const handlePlay = (item: LibraryItem | DownloadedEpisode, index: number) => {
     // Navigate to Player with the episode
     const episodes = activeTab === 'liked' ? libraryItems : downloadedItems;
-    const mappedEpisodes = episodes.map(e => {
+    const mappedEpisodes: Episode[] = episodes.map((e: LibraryItem | DownloadedEpisode) => {
       // For downloaded episodes, use local file path
       const audioUrl =
-        activeTab === 'downloads' && e.local_path
-          ? e.local_path
+        activeTab === 'downloads' && (e as DownloadedEpisode).local_path
+          ? (e as DownloadedEpisode).local_path
           : e.episode?.audio_url || '';
 
       // Provide fallback image to prevent TrackPlayer error
@@ -126,12 +126,15 @@ export default function MyLibrary() {
         'https://via.placeholder.com/300x300.png?text=Podcast';
 
       return {
+        id: e.episode_id,
         title: e.episode?.title || 'Unknown',
         audioUrl: audioUrl,
         image: imageUrl,
         pubDate: e.episode?.pub_date || '',
         description: e.episode?.description || '',
-      };
+        // Add required fields or fallbacks
+        artist: e.episode?.artist || 'Unknown Artist',
+      } as Episode;
     });
 
     // Dispatch to Redux for mini player
@@ -241,7 +244,7 @@ export default function MyLibrary() {
             ) : (
               /* PODCAST LIST */
               (activeTab === 'liked' ? libraryItems : downloadedItems).map(
-                (item, index) => {
+                (item: LibraryItem | DownloadedEpisode, index) => {
                   const audioUrl =
                     item.episode?.audio_url ||
                     item.episode?.audioUrl ||
@@ -255,7 +258,15 @@ export default function MyLibrary() {
                   return (
                     <PodcastCard
                       key={item.id || index}
-                      item={item.episode || item}
+                      item={
+                        item.episode || {
+                          id: item.episode_id || 'unknown',
+                          title: 'Unknown Title',
+                          audioUrl: '',
+                          image: 'https://via.placeholder.com/150',
+                          pubDate: '',
+                        }
+                      }
                       onPlay={() => handlePlay(item, index)}
                       onDownloadComplete={onDownloadComplete}
                       userId={user?.id}

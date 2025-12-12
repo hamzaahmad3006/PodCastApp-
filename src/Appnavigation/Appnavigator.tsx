@@ -8,7 +8,7 @@ import {
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { View } from 'react-native';
 
-export const navigationRef = createNavigationContainerRef<any>();
+export const navigationRef = createNavigationContainerRef<StackParamList>();
 
 // Redux
 import { useAppSelector } from '../redux/hooks';

@@ -2,7 +2,7 @@
 // This function runs on a schedule to check the RSS feed for new episodes
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 // @ts-ignore
 declare const Deno: any;
@@ -11,7 +11,7 @@ const RSS_URL = 'https://podcasts.files.bbci.co.uk/p01plr2p.rss'
 const ONESIGNAL_APP_ID = Deno.env.get('ONESIGNAL_APP_ID')!
 const ONESIGNAL_REST_API_KEY = Deno.env.get('ONESIGNAL_REST_API_KEY')!
 
-interface Episode {
+type Episode = {
     title: string
     pubDate: string
     audioUrl: string
@@ -48,14 +48,15 @@ async function fetchLatestEpisode(): Promise<Episode | null> {
             image: imageMatch ? imageMatch[1].trim() : 'https://via.placeholder.com/150',
             duration: durationMatch ? durationMatch[1].trim() : '0:00'
         }
-    } catch (error) {
-        console.error('Error fetching RSS feed:', error)
-        return null
     }
+    } catch (error: unknown) {
+    console.error('Error fetching RSS feed:', error)
+    return null
+}
 }
 
 // Send OneSignal notification
-async function sendPushNotification(episode: Episode): Promise<{ success: boolean; result: any }> {
+async function sendPushNotification(episode: Episode): Promise<{ success: boolean; result: unknown }> {
     try {
         const notification = {
             app_id: ONESIGNAL_APP_ID,
@@ -103,14 +104,14 @@ async function sendPushNotification(episode: Episode): Promise<{ success: boolea
             console.error('❌ Failed to send notification:', result)
             return { success: false, result }
         }
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error sending notification:', error)
-        return { success: false, result: error.message || 'Unknown error' }
+        return { success: false, result: (error as Error).message || 'Unknown error' }
     }
 }
 
 // Save notification to database for all users
-async function saveNotificationForAllUsers(supabase: any, episode: Episode): Promise<{ success: boolean; count: number }> {
+async function saveNotificationForAllUsers(supabase: SupabaseClient, episode: Episode): Promise<{ success: boolean; count: number }> {
     try {
         console.log('💾 Saving notification to database for all users...')
 
@@ -132,7 +133,7 @@ async function saveNotificationForAllUsers(supabase: any, episode: Episode): Pro
         console.log(`👥 Found ${users.length} users`)
 
         // Create notification records for all users
-        const notificationRecords = users.map((user: any) => ({
+        const notificationRecords = users.map((user: { id: string }) => ({
             user_id: user.id,
             title: '🎙️ New Episode Available!',
             body: episode.title,
@@ -163,7 +164,7 @@ async function saveNotificationForAllUsers(supabase: any, episode: Episode): Pro
         console.log(`✅ Successfully saved ${users.length} notification records`)
         return { success: true, count: users.length }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('❌ Error in saveNotificationForAllUsers:', error)
         return { success: false, count: 0 }
     }
@@ -266,10 +267,10 @@ serve(async (_req: Request) => {
                 { status: 200, headers: { 'Content-Type': 'application/json' } }
             )
         }
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('❌ Error in edge function:', error)
         return new Response(
-            JSON.stringify({ error: error.message || 'Unknown error' }),
+            JSON.stringify({ error: (error as Error).message || 'Unknown error' }),
             { status: 500, headers: { 'Content-Type': 'application/json' } }
         )
     }

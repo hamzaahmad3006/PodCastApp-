@@ -21,7 +21,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import PodcastCard from '../../components/PodCastCard';
 import { setPlaylist } from '../../redux/playerSlice';
 import { COLORS } from '../../constants/colors';
-import { RootState, Episode } from '../../types';
+import { RootState, Episode, DownloadedEpisode, MainStackParamList } from '../../types';
+import { NavigationProp } from '@react-navigation/native';
 
 
 const podcasts = [
@@ -55,7 +56,7 @@ export default function Search() {
 
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state: RootState) => state.auth);
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<NavigationProp<MainStackParamList>>();
 
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [filteredEpisodes, setFilteredEpisodes] = useState<Episode[]>([]);
@@ -89,7 +90,7 @@ export default function Search() {
     if (!user?.id) return;
     try {
       const downloaded = await DownloadService.getDownloadedEpisodes(user.id);
-      const downloadedIds = new Set(downloaded.map((d: any) => d.episode_id));
+      const downloadedIds = new Set(downloaded.map((d: DownloadedEpisode) => d.episode_id));
       setDownloadedEpisodes(downloadedIds);
     } catch (e) {
       // Error loading downloaded episodes
