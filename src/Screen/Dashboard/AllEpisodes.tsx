@@ -35,12 +35,6 @@ export default function AllEpisodes({ navigation, route }: Props) {
   const nav = useNavigation<any>();
 
   // Download state
-  const [downloadingEpisodes, setDownloadingEpisodes] = useState<Set<string>>(
-    new Set(),
-  );
-  const [downloadProgress, setDownloadProgress] = useState<Map<string, number>>(
-    new Map(),
-  );
   const [downloadedEpisodes, setDownloadedEpisodes] = useState<Set<string>>(
     new Set(),
   );

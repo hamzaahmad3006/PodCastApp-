@@ -8,7 +8,6 @@ import {
   FlatList,
   StyleSheet,
   ActivityIndicator,
-  Alert,
   ScrollView,
   RefreshControl,
 } from 'react-native';
@@ -24,9 +23,6 @@ import { Episode, RootState } from '../../types';
 import { COLORS } from '../../constants/colors';
 
 export default function Home() {
-
-  // console.log(SUPABASE_RSS_URL);
-
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state: RootState) => state.auth);
   const { unreadCount } = useAppSelector(

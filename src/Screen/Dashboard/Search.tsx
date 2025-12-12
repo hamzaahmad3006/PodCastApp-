@@ -10,12 +10,9 @@ import {
   StyleSheet,
   TextInput,
   ActivityIndicator,
-  Alert,
   Dimensions,
-  ScrollView,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import Feather from 'react-native-vector-icons/Feather';
 import { useAppSelector, useAppDispatch } from '../../redux/hooks';
 import { DownloadService } from '../../services/DownloadService';
 import { DatabaseService } from '../../services/database';

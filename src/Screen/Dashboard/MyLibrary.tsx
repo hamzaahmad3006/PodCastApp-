@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  Image,
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
@@ -51,9 +50,6 @@ export default function MyLibrary() {
       setDownloadedEpisodeIds(downloadIds);
 
       if (activeTab === 'downloads') {
-        // Fetch downloads with offline support
-
-        // OPTIMIZED: Batch fetch all episodes at once
         const episodeIds = downloads.map((d: any) => d.episode_id);
         let episodesMap = new Map();
 
@@ -68,11 +64,11 @@ export default function MyLibrary() {
               episodes.forEach((ep: any) => episodesMap.set(ep.id, ep));
             }
           } catch (error) {
-            // Supabase batch query failed, using cached metadata
+
           }
         }
 
-        // Map downloads to include episode data (from DB or Cache)
+
         const episodesWithDetails = await Promise.all(
           downloads.map(async (download: any) => {
             // 1. Try from batch result

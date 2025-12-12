@@ -3,91 +3,38 @@ import { Provider } from "react-redux";
 import { store } from "./src/redux/store";
 import AppNavigator from "./src/Appnavigation/Appnavigator";
 import { supabase } from "./src/supabase";
-import { setLoggedIn, setLoggedOut } from "./src/redux/authSlice";
+import { setLoggedOut } from "./src/redux/authSlice";
 import NotificationService from "./src/services/NotificationService";
-import { NotificationDatabaseService } from "./src/services/NotificationDatabaseService";
-import { loadNotifications } from "./src/redux/notificationSlice";
-import { StatusBar } from "react-native";
+import { handleAuthSession } from "./src/utils/authHelpers";
 
 export default function App() {
   useEffect(() => {
     // Initialize Notifications
     try {
-
       NotificationService.initialize();
-
     } catch (error) {
-      console.error("App.tsx: Notification initialization failed:", error);
+      console.error("Notification initialization failed:", error);
     }
 
-    // Non-blocking auth initialization
+    // Initialize authentication
     const initAuth = async () => {
       try {
-        // 1. Get session immediately and dispatch to unblock UI
         const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+
         if (sessionError) {
-          console.error("App.tsx: Session error:", sessionError);
+          console.error("Session error:", sessionError);
           store.dispatch(setLoggedOut());
           return;
         }
 
         const user = sessionData.session?.user;
         if (user) {
-          // Dispatch immediately - don't wait for profile fetch
-          store.dispatch(setLoggedIn({
-            id: user.id,
-            email: user.email,
-            display_name: user.user_metadata?.display_name || user.user_metadata?.name,
-            avatar_url: user.user_metadata?.avatar_url,
-            ...user.user_metadata
-          }));
-
-          // Fetch profile in background (fire and forget)
-          (async () => {
-            try {
-              const { data: profileData, error } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', user.id)
-                .single();
-
-              if (error && error.code !== 'PGRST116') { // PGRST116 = no rows
-                console.warn("App.tsx: Profile error:", error.message);
-              } else if (profileData) {
-                console.log("App.tsx: Profile found, updating");
-                store.dispatch(setLoggedIn({
-                  id: user.id,
-                  email: user.email,
-                  display_name: profileData.display_name,
-                  avatar_url: profileData.avatar_url,
-                  user_metadata: {
-                    ...user.user_metadata,
-                    // Override user_metadata avatar with database avatar if it exists
-                    avatar_url: profileData.avatar_url || user.user_metadata?.avatar_url
-                  }
-                }));
-              }
-
-              // Load notifications from Supabase
-              const notifications = await NotificationDatabaseService.loadNotifications(user.id);
-              store.dispatch(loadNotifications(notifications));
-
-              // Auto-cleanup old notifications (7+ days)
-              await NotificationDatabaseService.clearOldNotifications(user.id);
-
-              // Fix any existing files with double extensions (migration)
-              const { DownloadService } = await import('./src/services/DownloadService');
-              await DownloadService.fixDoubleExtensions(user.id);
-            } catch (e) {
-              console.error("App.tsx: Background profile fetch error:", e);
-            }
-          })();
+          await handleAuthSession(user);
         } else {
-          console.log("App.tsx: No user in session");
           store.dispatch(setLoggedOut());
         }
       } catch (err) {
-        console.error("App.tsx: Init error:", err);
+        console.error("Init error:", err);
         store.dispatch(setLoggedOut());
       }
     };
@@ -96,59 +43,9 @@ export default function App() {
 
     // Auth state change listener
     const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("App.tsx: Auth State Change Event:", event);
-
       if (session?.user) {
-        console.log("App.tsx: Auth Change - User:", session.user.id);
-
-        // Dispatch immediately to unblock
-        store.dispatch(setLoggedIn({
-          id: session.user.id,
-          email: session.user.email,
-          display_name: session.user.user_metadata?.display_name || session.user.user_metadata?.name,
-          avatar_url: session.user.user_metadata?.avatar_url,
-          ...session.user.user_metadata
-        }));
-
-        // Fetch profile in background (fire and forget)
-        (async () => {
-          try {
-            const { data: profileData, error } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', session.user.id)
-              .single();
-
-            if (error && error.code !== 'PGRST116') {
-              console.warn("App.tsx: Profile fetch error:", error.message);
-            } else if (profileData) {
-              console.log("App.tsx: Profile updated");
-              store.dispatch(setLoggedIn({
-                id: session.user.id,
-                email: session.user.email,
-                display_name: profileData.display_name || session.user.user_metadata?.display_name,
-                // Prioritize database avatar, only use OAuth avatar if database avatar is empty
-                avatar_url: profileData.avatar_url || session.user.user_metadata?.avatar_url,
-                user_metadata: {
-                  ...session.user.user_metadata,
-                  // Override user_metadata avatar with database avatar if it exists
-                  avatar_url: profileData.avatar_url || session.user.user_metadata?.avatar_url
-                }
-              }));
-            }
-
-            // Load notifications from Supabase
-            const notifications = await NotificationDatabaseService.loadNotifications(session.user.id);
-            store.dispatch(loadNotifications(notifications));
-
-            // Auto-cleanup old notifications (7+ days)
-            await NotificationDatabaseService.clearOldNotifications(session.user.id);
-          } catch (error) {
-            console.error("App.tsx: Background profile fetch failed:", error);
-          }
-        })();
+        await handleAuthSession(session.user);
       } else {
-        console.log("App.tsx: Auth Change - No user");
         store.dispatch(setLoggedOut());
       }
     });
@@ -162,5 +59,3 @@ export default function App() {
     </Provider>
   );
 }
-
-
