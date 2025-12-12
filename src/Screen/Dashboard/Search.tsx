@@ -39,25 +39,25 @@ const podcasts = [
     id: 1,
     title: 'Mind of an Entrepreneur',
     category: 'Business',
-    image: require('../../assets/search1.png'),
+    image: require('../../assets/search_01.png'),
   },
   {
     id: 2,
     title: 'Unravelling the Mind',
     category: 'Healthy Lifestyle',
-    image: require('../../assets/search2.png'),
+    image: require('../../assets/search_02.png'),
   },
   {
     id: 3,
     title: 'A Tale of Writer',
     category: 'Educational',
-    image: require('../../assets/search3.png'),
+    image: require('../../assets/search_03.png'),
   },
   {
     id: 4,
     title: 'Addiction to Social!',
     category: 'Sociology',
-    image: require('../../assets/search4.png'),
+    image: require('../../assets/search_04.png'),
   },
 ];
 

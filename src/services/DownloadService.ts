@@ -11,7 +11,7 @@ export const DownloadService = {
   CACHE_SIZE_LIMIT: 500 * 1024 * 1024,
 
   /** Map of active download tasks */
-  activeDownloads: new Map<string, unknown>(),
+  activeDownloads: new Map<string, { jobId: number; promise: Promise<any> }>(),
 
   /** Get the download directory path based on platform */
   getDownloadDirectory(): string {
@@ -226,8 +226,10 @@ export const DownloadService = {
         progress: res => {
           if (onProgress) {
             onProgress({
+              episodeId: episodeId,
               bytesWritten: res.bytesWritten,
               contentLength: res.contentLength,
+              totalBytes: res.contentLength,
               progress: res.bytesWritten / res.contentLength,
             });
           }
@@ -275,7 +277,7 @@ export const DownloadService = {
   async cancelDownload(episodeId: string): Promise<void> {
     const task = this.activeDownloads.get(episodeId);
     if (task) {
-      task.stop();
+      RNFS.stopDownload(task.jobId);
       this.activeDownloads.delete(episodeId);
       // Attempt to delete any partially downloaded file
       const filename = `${episodeId}.mp3`;
@@ -449,6 +451,6 @@ export const DownloadService = {
           fixedCount++;
         }
       }
-    } catch (error) {}
+    } catch (error) { }
   },
 };

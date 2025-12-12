@@ -5,29 +5,7 @@ import { store } from '../redux/store';
 import { addNotification } from '../redux/notificationSlice';
 import { NotificationDatabaseService } from './NotificationDatabaseService';
 
-interface Episode {
-  title: string;
-  description: string;
-  enclosure: {
-    url: string;
-    type: string;
-  };
-  itunes: {
-    image: string;
-    duration: string;
-  };
-}
-
-interface NotificationData {
-  episode_title?: string;
-  title?: string;
-  description?: string;
-  episode_url?: string;
-  audioUrl?: string;
-  image?: string;
-  duration?: string;
-  type?: string;
-}
+import { Episode, NotificationData } from '../types';
 
 class NotificationService {
   initialize() {

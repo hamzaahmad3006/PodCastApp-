@@ -18,7 +18,7 @@ import Feather from 'react-native-vector-icons/Feather';
 import { useAppSelector, useAppDispatch } from '../../redux/hooks';
 import { DownloadService } from '../../services/DownloadService';
 import { DatabaseService } from '../../services/database';
-import { DownloadManager } from '../../controller/DownloadManger';
+import { DownloadManager } from '../../controller/DownloadManager';
 import { SUPABASE_ANON_KEY } from '@env';
 import PodcastCard from '../../components/PodCastCard';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -46,8 +46,8 @@ export default function Home() {
   const navigation = useNavigation<any>();
 
   const trendingimages = [
-    require('../../assets/trending1.jpg'),
-    require('../../assets/trending2.jpg'),
+    require('../../assets/trending_01.jpg'),
+    require('../../assets/trending_02.jpg'),
   ];
 
   useFocusEffect(
@@ -75,7 +75,7 @@ export default function Home() {
               if (cachedMetadata) {
                 return { ...ep, ...cachedMetadata };
               }
-            } catch (e) {}
+            } catch (e) { }
           }
           return ep;
         }),
@@ -94,7 +94,7 @@ export default function Home() {
       const downloaded = await DownloadService.getDownloadedEpisodes(user.id);
       const downloadedIds = new Set(downloaded.map((d: any) => d.episode_id));
       setDownloadedEpisodes(downloadedIds);
-    } catch (e) {}
+    } catch (e) { }
   };
 
   const fetchEpisodes = async () => {

@@ -6,13 +6,13 @@ import { UserProfile, LibraryItem, Episode } from '../types';
 export type { UserProfile, LibraryItem };
 
 export const DatabaseService = {
-  // --- Helper ---
+  //===== Helper =====
   getEpisodeIdFromUrl(audioUrl: string): string {
     if (!audioUrl) return `ep_${Date.now()}`;
     return audioUrl.split('/').pop()?.split('?')[0] || `ep_${Date.now()}`;
   },
 
-  // --- Profiles ---
+  //===== Ensure user profile =====
   async ensureUserProfile(
     userId: string,
     userEmail?: string,
@@ -25,9 +25,9 @@ export const DatabaseService = {
       .eq('id', userId)
       .single();
 
-    if (existing) return; // Profile already exists
+    if (existing) return;
 
-    // Create profile if it doesn't exist
+
     const { error } = await supabase.from('profiles').insert({
       id: userId,
       email: userEmail || '',
@@ -35,9 +35,7 @@ export const DatabaseService = {
       avatar_url: '',
     });
 
-    if (error && !error.message.includes('duplicate key')) {
-      // Error creating profile
-    }
+
   },
 
   async getUserProfile(userId: string) {
@@ -51,6 +49,7 @@ export const DatabaseService = {
     return data as UserProfile;
   },
 
+  //===== Update user profile =====
   async updateUserProfile(userId: string, updates: Partial<UserProfile>) {
     const { data, error } = await supabase
       .from('profiles')
@@ -65,22 +64,18 @@ export const DatabaseService = {
 
   async uploadAvatar(userId: string, imageUri: string, imageName: string) {
     try {
-      // For React Native, we need to read the file properly using RNFS
-      // Remove 'file://' prefix if present
       let filePath = imageUri;
       if (filePath.startsWith('file://')) {
         filePath = filePath.replace('file://', '');
       }
 
-      // Read the file as base64
+
       const base64Data = await RNFS.readFile(filePath, 'base64');
 
-      // Convert base64 to binary using Buffer (available in React Native via polyfill)
       const buffer = Buffer.from(base64Data, 'base64');
 
-      // Upload to Supabase Storage
       const storagePath = `${userId}/${imageName}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(storagePath, buffer, {
           cacheControl: '3600',
@@ -92,28 +87,24 @@ export const DatabaseService = {
         throw uploadError;
       }
 
-      // Get public URL
       const { data: urlData } = supabase.storage
         .from('avatars')
         .getPublicUrl(storagePath);
 
       const avatarUrl = urlData.publicUrl;
 
-      // Verify the file exists by attempting to download it
       try {
-        const { data: downloaded, error: downloadError } =
+        const { error: downloadError } =
           await supabase.storage.from('avatars').download(storagePath);
 
         if (downloadError) {
-          // Verification download failed
+
         } else {
-          // Verification successful
+
         }
       } catch (verErr) {
-        // Verification threw error
-      }
 
-      // Update profile with new avatar URL
+      }
       await this.updateUserProfile(userId, { avatar_url: avatarUrl });
 
       return avatarUrl;
@@ -126,7 +117,7 @@ export const DatabaseService = {
   async upsertEpisode(episode: Episode) {
     const { error } = await supabase.from('episodes').upsert(
       {
-        id: episode.id || episode.audioUrl, // Prefer explicit ID (e.g. safe filename)
+        id: episode.id || episode.audioUrl,
         title: episode.title,
         description: episode.description,
         audio_url: episode.audioUrl,
@@ -137,7 +128,7 @@ export const DatabaseService = {
       { onConflict: 'id' },
     );
 
-    // Silently handle errors
+
   },
 
   // --- Library ---
@@ -147,15 +138,11 @@ export const DatabaseService = {
     status: 'queue' | 'liked' | 'history' | 'downloaded',
   ) {
     try {
-      // 0. Ensure user profile exists (non-blocking)
       this.ensureUserProfile(userId).catch(() => {
-        // Error ensuring user profile
       });
 
-      // 1. Ensure episode exists in episodes table
       await this.upsertEpisode(episode);
 
-      // 2. Add to user_library
       const { error } = await supabase.from('user_library').upsert(
         {
           user_id: userId,
@@ -167,10 +154,10 @@ export const DatabaseService = {
       );
 
       if (error) {
-        // Error adding to library
+
       }
     } catch (err) {
-      // Unexpected error in addToLibrary
+
     }
   },
 
@@ -194,8 +181,6 @@ export const DatabaseService = {
     status: 'queue' | 'liked' | 'history' | 'downloaded',
   ) {
     console.log(`Database: getLibrary-${status} starting...`);
-    const start = Date.now();
-
     try {
       const { data, error } = await supabase
         .from('user_library')
@@ -220,14 +205,13 @@ export const DatabaseService = {
   },
 
   async getLibraryStats(userId: string) {
-    const start = Date.now();
     const { count: likedCount, error: likedError } = await supabase
       .from('user_library')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId)
       .eq('status', 'liked');
 
-    // Mocking "following" for now as we don't have a following table yet
+
     const followingCount = 0;
 
     if (likedError) throw likedError;

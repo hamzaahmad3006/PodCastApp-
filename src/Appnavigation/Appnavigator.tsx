@@ -33,27 +33,11 @@ import NotificationsScreen from '../Screen/Dashboard/NotificationsScreen';
 import MiniPlayer from '../components/MiniPlayer';
 
 // ----- Types -----
-type TabParamList = {
-  Home: undefined;
-  Search: undefined;
-  Library: undefined;
-  Profile: undefined;
-};
-
-type MainStackParamList = {
-  Tabs: undefined;
-  Player: undefined;
-  AllEpisodes: undefined;
-  Notifications: undefined;
-};
-
-type StackParamList = {
-  Root: undefined;
-  Login: undefined;
-  Register: undefined;
-  RegisterForm: undefined;
-  ForgotPassword: undefined;
-};
+import {
+  TabParamList,
+  MainStackParamList,
+  StackParamList,
+} from '../types';
 
 const Stack = createNativeStackNavigator<StackParamList>();
 const MainStack = createNativeStackNavigator<MainStackParamList>();

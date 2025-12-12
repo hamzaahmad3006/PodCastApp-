@@ -21,6 +21,7 @@ export interface EpisodeMetadata {
   image: string;
   audioUrl?: string;
   pubDate?: string;
+  description?: string;
 }
 
 // =========USER & AUTH TYPES================
@@ -124,11 +125,15 @@ export interface NotificationState {
 }
 
 export interface NotificationData {
-  type?: string;
-  episode_url?: string;
   episode_title?: string;
+  title?: string;
+  description?: string;
+  episode_url?: string;
+  audioUrl?: string; // Unified with episode_url in usage
+  image?: string; // Unified with episode_image
   episode_image?: string;
-  episode_duration?: string;
+  duration?: string;
+  type?: string;
   [key: string]: unknown;
 }
 
@@ -137,22 +142,23 @@ export interface NotificationData {
 export type TabParamList = {
   Home: undefined;
   Search: undefined;
-  MyLibrary: undefined;
+  Library: undefined;
   Profile: undefined;
 };
 
 export type MainStackParamList = {
-  Main: undefined;
-  Player: { episodes: Episode[]; index: number; episode?: Episode };
-  AllEpisodes: { episodes: Episode[] };
+  Tabs: undefined;
+  Player: undefined; // Params mostly handled via reducer or simple obj
+  AllEpisodes: undefined;
   Notifications: undefined;
 };
 
 export type StackParamList = {
+  Root: undefined;
   Login: undefined;
   Register: undefined;
+  RegisterForm: undefined;
   ForgotPassword: undefined;
-  MainApp: undefined;
 };
 
 // =========COMPONENT PROPS================

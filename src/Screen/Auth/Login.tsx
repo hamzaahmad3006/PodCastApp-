@@ -89,7 +89,7 @@ export default function Login({ navigation }: Props) {
         >
           <View style={styles.container}>
             <Image
-              source={require('../../assets/headphone-dynamic-gradient.png')}
+              source={require('../../assets/headphone_dynamic_gradient.png')}
               style={styles.background}
             />
 

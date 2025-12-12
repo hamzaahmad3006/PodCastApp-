@@ -1,11 +1,12 @@
 import { DatabaseService } from '../services/database';
 import { DownloadService } from '../services/DownloadService';
 import { Alert } from 'react-native';
+import { Episode } from '../types';
 
 export const DownloadManager = {
   async downloadEpisode(
     userId: string,
-    episode: any,
+    episode: Episode,
     callbacks: {
       onProgress?: (percent: number) => void;
       onComplete?: (episodeId: string) => void;
@@ -56,10 +57,11 @@ export const DownloadManager = {
       callbacks.onComplete?.(episodeId);
 
       return episodeId;
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to download episode';
       Alert.alert(
         'Download Failed',
-        error.message || 'Failed to download episode',
+        errorMessage,
       );
       return false;
     }

@@ -2,9 +2,9 @@ import { supabase } from '../supabase';
 import { NotificationItem } from '../redux/notificationSlice';
 
 export const NotificationDatabaseService = {
-  /**
-   * Save a notification to Supabase
-   */
+
+  //===== Save a notification to Supabase =====
+
   async saveNotification(
     userId: string,
     notification: Omit<NotificationItem, 'read' | 'date'> & {
@@ -39,9 +39,9 @@ export const NotificationDatabaseService = {
     }
   },
 
-  /**
-   * Load all notifications for a user
-   */
+
+  //===== Load all notifications for a user =====
+
   async loadNotifications(userId: string): Promise<NotificationItem[]> {
     try {
       const { data, error } = await supabase
@@ -55,7 +55,7 @@ export const NotificationDatabaseService = {
         return [];
       }
 
-      // Transform database format to NotificationItem format
+
       return (data || []).map(item => ({
         id: item.id,
         title: item.title,
@@ -70,9 +70,9 @@ export const NotificationDatabaseService = {
     }
   },
 
-  /**
-   * Mark a notification as read
-   */
+
+  //===== Mark a notification as read =====
+
   async markAsRead(userId: string, notificationId: string) {
     try {
       const { error } = await supabase
@@ -92,9 +92,9 @@ export const NotificationDatabaseService = {
     }
   },
 
-  /**
-   * Mark all notifications as read for a user
-   */
+
+  //===== Mark all notifications as read for a user =====
+
   async markAllAsRead(userId: string) {
     try {
       const { error } = await supabase
@@ -113,9 +113,9 @@ export const NotificationDatabaseService = {
     }
   },
 
-  /**
-   * Clear all notifications for a user
-   */
+
+  //===== Clear all notifications for a user =====
+
   async clearAllNotifications(userId: string) {
     try {
       const { error } = await supabase
@@ -134,9 +134,9 @@ export const NotificationDatabaseService = {
     }
   },
 
-  /**
-   * Delete notifications older than 7 days
-   */
+
+  //===== Delete notifications older than 7 days =====
+
   async clearOldNotifications(userId: string) {
     try {
       const sevenDaysAgo = new Date();

@@ -10,7 +10,7 @@ import {
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
 import { Svg, Circle } from 'react-native-svg';
-import { DownloadManager } from '../controller/DownloadManger';
+import { DownloadManager } from '../controller/DownloadManager';
 import { PodcastCardProps } from '../types';
 import { COLORS } from '../constants/colors';
 
@@ -38,9 +38,8 @@ export default function PodcastCard({
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `Check out this podcast: ${
-          item.title || item.episode?.title
-        }\nListen here: ${item.audioUrl || item.episode?.audio_url}`,
+        message: `Check out this podcast: ${item.title || item.episode?.title
+          }\nListen here: ${item.audioUrl || item.episode?.audio_url}`,
       });
     } catch (error) {
       // Share error

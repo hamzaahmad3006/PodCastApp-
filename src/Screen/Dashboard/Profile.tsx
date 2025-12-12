@@ -14,7 +14,6 @@ import {
   ToastAndroid,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
 import { useFocusEffect } from '@react-navigation/native';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 
@@ -24,7 +23,7 @@ import { setLoggedOut, setLoggedIn } from '../../redux/authSlice';
 import { store } from '../../redux/store';
 import { DatabaseService, LibraryItem } from '../../services/database';
 import { DownloadService } from '../../services/DownloadService';
-import { DownloadManager } from '../../controller/DownloadManger';
+import { DownloadManager } from '../../controller/DownloadManager';
 import PodcastCard from '../../components/PodCastCard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import StripeBackground from '../../components/StripeLine';
