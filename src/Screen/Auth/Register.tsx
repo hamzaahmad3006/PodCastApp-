@@ -45,7 +45,6 @@ export default function Register({ navigation }: ScreenProps) {
 
       if (!res.data?.idToken) throw new Error('No ID token from Google');
 
-      // Supabase sign in with Google ID token and access token
       const { data, error } = await supabase.auth.signInWithIdToken({
         provider: 'google',
         token: res.data.idToken,
@@ -58,7 +57,6 @@ export default function Register({ navigation }: ScreenProps) {
       }
 
       if (data.session?.user) {
-        // Fetch profile from database to get custom avatar
         const { data: profileData } = await supabase
           .from('profiles')
           .select('*')
@@ -70,7 +68,7 @@ export default function Register({ navigation }: ScreenProps) {
             id: data.session.user.id,
             name: data.session.user.user_metadata?.full_name || 'Unknown',
             email: data.session.user.email || '',
-            // Prioritize database avatar over Google avatar
+
             avatar_url:
               profileData?.avatar_url ||
               data.session.user.user_metadata?.avatar_url ||
@@ -80,7 +78,7 @@ export default function Register({ navigation }: ScreenProps) {
               data.session.user.user_metadata?.full_name,
             user_metadata: {
               ...data.session.user.user_metadata,
-              // Override with database avatar if it exists
+
               avatar_url:
                 profileData?.avatar_url ||
                 data.session.user.user_metadata?.avatar_url,
@@ -89,7 +87,6 @@ export default function Register({ navigation }: ScreenProps) {
         );
       }
 
-      //Navigate to Home
       navigation.replace('Root');
       ToastAndroid.show('Welcome to PodApp ', ToastAndroid.LONG);
     } catch (error: unknown) {

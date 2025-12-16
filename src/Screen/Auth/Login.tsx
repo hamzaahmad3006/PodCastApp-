@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     elevation: 6,
     marginTop: -10,
-    height: '100%',
+    flex: 1,
   },
   loginBtn: {
     flexDirection: 'row',

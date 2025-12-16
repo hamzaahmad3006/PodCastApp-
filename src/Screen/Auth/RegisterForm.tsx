@@ -17,6 +17,7 @@ import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
 import { supabase } from '../../supabase';
 import { ScreenProps } from '../../types';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { COLORS } from '../../constants/colors';
 
 export default function RegisterForm({ navigation }: ScreenProps) {
   const [name, setName] = useState('');
@@ -225,7 +226,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.WHITE,
     alignItems: 'center',
   },
 
@@ -238,14 +239,14 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#A637FF',
-    color: '#000',
+    borderColor: COLORS.PRIMARY,
+    color: COLORS.BLACK,
   },
 
   input: {
     flex: 1,
     fontSize: 15,
-    color: '#000',
+    color: COLORS.BLACK,
     fontFamily: 'Manrope-Medium',
   },
 
@@ -263,18 +264,18 @@ const styles = StyleSheet.create({
 
   card: {
     width: '100%',
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.WHITE,
     padding: 20,
     borderRadius: 20,
     elevation: 6,
     marginTop: -10,
-    height: '100%',
+    flex: 1,
   },
 
   emailInput: {
     flexDirection: 'row',
-    backgroundColor: '#EDEDED',
-    color: '#000',
+    backgroundColor: COLORS.INPUT_GRAY,
+    color: COLORS.BLACK,
     padding: 14,
     paddingVertical: 20,
     borderRadius: 10,
@@ -298,8 +299,8 @@ const styles = StyleSheet.create({
   loginBtn: {
     flexDirection: 'row',
     borderWidth: 1,
-    borderColor: '#A637FF',
-    backgroundColor: '#A637FF',
+    borderColor: COLORS.PRIMARY,
+    backgroundColor: COLORS.PRIMARY,
     padding: 14,
     borderRadius: 10,
     alignItems: 'center',
@@ -321,7 +322,7 @@ const styles = StyleSheet.create({
   },
 
   registerLink: {
-    color: '#A637FF',
+    color: COLORS.PRIMARY,
     fontFamily: 'Manrope-Medium',
   },
 });
