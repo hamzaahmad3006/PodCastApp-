@@ -110,14 +110,14 @@ const NotificationsScreen = () => {
   );
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.WHITE }} edges={['top']}>
       <View style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             style={styles.backButton}
           >
-            <Ionicons name="arrow-back" size={24} color="#000" />
+            <Ionicons name="arrow-back" size={24} color={COLORS.BLACK} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Notifications</Text>
           <TouchableOpacity onPress={handleClearAll} style={styles.clearButton}>
@@ -146,7 +146,7 @@ const NotificationsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.WHITE,
   },
   header: {
     flexDirection: 'row',
@@ -166,14 +166,14 @@ const styles = StyleSheet.create({
   itemContainer: {
     flexDirection: 'row',
     padding: 15,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.WHITE,
     borderRadius: 12,
     marginBottom: 10,
     borderWidth: 1,
     borderColor: '#f0f0f0',
     alignItems: 'center',
   },
-  unreadItem: { backgroundColor: '#F9F0FF', borderColor: '#E0B0FF' },
+  unreadItem: { backgroundColor: '#F9F0FF', borderColor: COLORS.LIGHT_PINK },
   iconContainer: {
     width: 40,
     height: 40,

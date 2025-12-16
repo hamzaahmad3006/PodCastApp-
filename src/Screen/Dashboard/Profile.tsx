@@ -31,6 +31,7 @@ import StripeBackground from '../../components/StripeLine';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TrackPlayer from 'react-native-track-player';
 import { clearPlayer } from '../../redux/playerSlice';
+import { COLORS } from '../../constants/colors';
 
 
 
@@ -63,8 +64,6 @@ export default function EditProfile({ navigation }: ScreenProps) {
     try {
       if (!refreshing) setLoading(true);
 
-
-      // Fetch Stats, History, and Downloaded Episodes in parallel
       const [statsData, historyData, downloadedData] = await Promise.all([
         DatabaseService.getLibraryStats(user?.id),
         DatabaseService.getLibrary(user?.id, 'history'),
@@ -72,7 +71,6 @@ export default function EditProfile({ navigation }: ScreenProps) {
       ]);
       setStats(statsData);
 
-      // Remove duplicates - keep only the most recent occurrence of each episode
       const uniqueHistory: LibraryItem[] = [];
       const seenEpisodeIds = new Set<string>();
 
@@ -83,12 +81,8 @@ export default function EditProfile({ navigation }: ScreenProps) {
         }
       }
 
-      // Store full history for playback
       setFullHistory(uniqueHistory);
-      // Limit display to last 5 unique episodes
       setRecentlyPlayed(uniqueHistory.slice(0, 5));
-
-      // Set downloaded episodes
       const downloadedIds = new Set(
         downloadedData.map((d: DownloadedEpisode) => d.episode_id),
       );
@@ -115,7 +109,6 @@ export default function EditProfile({ navigation }: ScreenProps) {
     }, [user?.id]),
   );
 
-  // Get avatar URL from either direct property or user_metadata (for Google OAuth)
   const avatarUrl = user?.avatar_url || user?.user_metadata?.avatar_url;
   const displayName =
     user?.display_name ||
@@ -145,7 +138,6 @@ export default function EditProfile({ navigation }: ScreenProps) {
           setLoading(true);
           const fileName = asset.fileName || `avatar_${Date.now()}.jpg`;
 
-          // Upload to Supabase
           if (!user?.id) throw new Error('User ID not found');
           if (!asset.uri) throw new Error('Image URI not found');
 
@@ -155,7 +147,6 @@ export default function EditProfile({ navigation }: ScreenProps) {
             fileName,
           );
 
-          // Update Redux - ensure both avatar_url and user_metadata.avatar_url are updated
           const updatedUser = {
             ...user,
             avatar_url: newAvatarUrl,
@@ -253,7 +244,7 @@ export default function EditProfile({ navigation }: ScreenProps) {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor="#A637FF"
+              colors={[COLORS.PRIMARY]}
             />
           }
         >
@@ -270,7 +261,7 @@ export default function EditProfile({ navigation }: ScreenProps) {
                 <Ionicons
                   name="log-out-outline"
                   size={26}
-                  color="#000"
+                  color={COLORS.BLACK}
                   style={{ marginTop: 30 }}
                 />
               </TouchableOpacity>
@@ -314,7 +305,7 @@ export default function EditProfile({ navigation }: ScreenProps) {
                   ]);
                 }}
               >
-                <Ionicons name="camera" size={18} color="#fff" />
+                <Ionicons name="camera" size={18} color={COLORS.WHITE} />
               </TouchableOpacity>
             </View>
 
@@ -354,7 +345,7 @@ export default function EditProfile({ navigation }: ScreenProps) {
           {loading ? (
             <ActivityIndicator
               size="small"
-              color="#A637FF"
+              color={COLORS.PRIMARY}
               style={{ marginTop: 20 }}
             />
           ) : recentlyPlayed.length === 0 ? (
@@ -435,7 +426,7 @@ export default function EditProfile({ navigation }: ScreenProps) {
             style={styles.modalCloseBtn}
             onPress={() => setShowAvatarModal(false)}
           >
-            <Ionicons name="close-circle" size={44} color="#fff" />
+            <Ionicons name="close-circle" size={44} color={COLORS.WHITE} />
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
@@ -448,7 +439,7 @@ export default function EditProfile({ navigation }: ScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.WHITE,
     paddingHorizontal: 20,
   },
 
@@ -456,7 +447,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    // marginTop: 10,
+
   },
   headerTitle: {
     fontSize: 20,
@@ -470,13 +461,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     zIndex: 10,
     elevation: 10,
-    backgroundColor: '#fff', // White background for border effect
+    backgroundColor: COLORS.WHITE, // White background for border effect
     width: 150,
     height: 150,
     borderRadius: 75,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: COLORS.BLACK,
     shadowOpacity: 0.2,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 3 },
@@ -492,18 +483,18 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     right: 0,
-    backgroundColor: '#4800E0',
+    backgroundColor: COLORS.PROFILE_CARD,
     width: 36,
     height: 36,
     borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
-    borderColor: '#fff',
+    borderColor: COLORS.WHITE,
   },
 
   profileCard: {
-    backgroundColor: '#4800E0', // Deep purple matching the screenshot
+    backgroundColor: COLORS.PROFILE_CARD, // Deep purple matching the screenshot
     paddingTop: 70,
     paddingBottom: 20,
     paddingHorizontal: 20,
@@ -516,7 +507,7 @@ const styles = StyleSheet.create({
   },
 
   name: {
-    color: '#fff',
+    color: COLORS.WHITE,
     fontSize: 20,
     fontFamily: 'PublicSans-Bold',
     marginTop: 30,
@@ -535,11 +526,11 @@ const styles = StyleSheet.create({
     width: 1,
     height: 40,
 
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.WHITE,
   },
 
   statNumber: {
-    color: '#fff',
+    color: COLORS.WHITE,
     fontSize: 19,
     fontFamily: 'PublicSans-Bold',
   },
@@ -553,13 +544,13 @@ const styles = StyleSheet.create({
   label: {
     marginTop: 25,
     fontSize: 14,
-    color: '#8D5CF6',
+    color: COLORS.PRIMARY,
     fontFamily: 'Manrope-SemiBold',
   },
 
   input: {
     borderWidth: 1,
-    borderColor: '#8D5CF6',
+    borderColor: COLORS.PRIMARY,
     borderRadius: 12,
     padding: 12,
     marginTop: 8,
@@ -603,7 +594,7 @@ const styles = StyleSheet.create({
   },
 
   saveText: {
-    color: '#fff',
+    color: COLORS.WHITE,
     fontSize: 16,
     fontWeight: '700',
   },

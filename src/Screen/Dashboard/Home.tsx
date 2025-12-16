@@ -115,7 +115,6 @@ export default function Home() {
   const handlePlay = useCallback(
     (index: number) => {
       dispatch(setPlaylist({ episodes, index }));
-      // @ts-ignore - Player params handled via Redux, not navigation types
       navigation.navigate('Player', { episodes, index });
     },
     [episodes, navigation, dispatch],
@@ -164,7 +163,7 @@ export default function Home() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.WHITE }} edges={['top']}>
       <FlatList
         data={
           enrichedEpisodes.length > 0
@@ -249,12 +248,11 @@ export default function Home() {
                         <TouchableOpacity
                           style={styles.playNowBtn}
                           onPress={() => {
-                            // @ts-ignore - Player params handled via Redux
                             navigation.navigate('Player', { episodes, index });
                           }}
                         >
                           <Text style={styles.playNowText}>Play Now</Text>
-                          <Ionicons name="play" size={16} color="#000" />
+                          <Ionicons name="play" size={16} color={COLORS.BLACK} />
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -318,7 +316,7 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderWidth: 1,
-    borderColor: '#DDDDDD',
+    borderColor: COLORS.LIGHT_GRAY,
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
@@ -354,10 +352,10 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontFamily: 'Inter-Bold',
     marginTop: 5,
-    color: '#fff',
+    color: COLORS.WHITE,
   },
   bannerSubtitle: {
-    color: 'white',
+    color: COLORS.WHITE,
     marginBottom: 10,
     fontFamily: 'Inter-Regular',
   },
@@ -401,7 +399,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -5,
     right: -5,
-    backgroundColor: '#FF3B30',
+    backgroundColor: COLORS.ERROR,
     borderRadius: 10,
     minWidth: 20,
     height: 20,
@@ -409,10 +407,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 4,
     borderWidth: 1.5,
-    borderColor: '#fff',
+    borderColor: COLORS.WHITE,
   },
   badgeText: {
-    color: '#fff',
+    color: COLORS.WHITE,
     fontSize: 10,
     fontWeight: 'bold',
   },

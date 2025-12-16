@@ -27,12 +27,9 @@ export default function AllEpisodes({ navigation, route }: ScreenProps) {
   const [displayLimit, setDisplayLimit] = useState(10);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  // Download state
   const [downloadedEpisodes, setDownloadedEpisodes] = useState<Set<string>>(
     new Set(),
   );
-
-  // Check for existing downloads
   useEffect(() => {
     const checkDownloads = async () => {
       if (user?.id) {
@@ -44,10 +41,8 @@ export default function AllEpisodes({ navigation, route }: ScreenProps) {
     checkDownloads();
   }, [user?.id]);
 
-  // Memoized callback for playing episodes
   const handlePlay = useCallback(
     (index: number) => {
-      // @ts-ignore - Player params handled via Redux, not navigation types
       nav.navigate('Player', { episodes, index });
     },
     [episodes, nav],
@@ -63,7 +58,6 @@ export default function AllEpisodes({ navigation, route }: ScreenProps) {
     } catch (e) { }
   };
 
-  // Memoized render function
   const renderEpisode = useCallback(
     ({ item, index }: { item: Episode; index: number }) => {
       const episodeId = DatabaseService.getEpisodeIdFromUrl(
@@ -82,7 +76,7 @@ export default function AllEpisodes({ navigation, route }: ScreenProps) {
     },
     [handlePlay, user, downloadedEpisodes],
   );
-  // Get item layout for better scrolling performance
+
   const getItemLayout = useCallback(
     (_data: ArrayLike<Episode> | null | undefined, index: number) => ({
       length: 119,
@@ -96,7 +90,7 @@ export default function AllEpisodes({ navigation, route }: ScreenProps) {
     if (loadingMore || displayLimit >= episodes.length) return;
 
     setLoadingMore(true);
-    // Simulate network delay for better UX
+
     setTimeout(() => {
       setDisplayLimit(prev => prev + 10);
       setLoadingMore(false);
@@ -120,7 +114,7 @@ export default function AllEpisodes({ navigation, route }: ScreenProps) {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.WHITE }} edges={['top']}>
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
@@ -128,7 +122,7 @@ export default function AllEpisodes({ navigation, route }: ScreenProps) {
             style={styles.backBtn}
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="arrow-back" size={20} color="#000" />
+            <Ionicons name="arrow-back" size={20} color={COLORS.BLACK} />
           </TouchableOpacity>
 
           <Text style={styles.headerTitle}>All Episodes</Text>
@@ -144,7 +138,6 @@ export default function AllEpisodes({ navigation, route }: ScreenProps) {
           contentContainerStyle={{ padding: 20, paddingTop: 10 }}
           showsVerticalScrollIndicator={false}
           ListFooterComponent={renderFooter}
-          // Performance optimizations
           getItemLayout={getItemLayout}
           removeClippedSubviews={true}
           maxToRenderPerBatch={10}
@@ -160,7 +153,7 @@ export default function AllEpisodes({ navigation, route }: ScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.WHITE,
     paddingBottom: 30,
   },
   header: {
@@ -168,11 +161,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 10, // Reduced from 40
+    paddingTop: 10,
     paddingBottom: 15,
   },
   backBtn: {
-    backgroundColor: '#F2F2F2',
+    backgroundColor: COLORS.BACKGROUND_GRAY,
     width: 36,
     height: 36,
     borderRadius: 18,
@@ -193,7 +186,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   loadMoreText: {
-    color: '#fff',
+    color: COLORS.WHITE,
     fontSize: 14,
     fontFamily: 'PublicSans-Bold',
   },

@@ -37,7 +37,6 @@ export default function PlayerScreen({ navigation, route }: ScreenProps) {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector(state => state.auth);
   const params = route?.params || {};
-  // Handle both single episode (from notification) and array of episodes (from list)
   const episodes: Episode[] =
     (params.episodes as Episode[]) || (params.episode ? [params.episode] : []);
   const startIndex: number =
@@ -45,16 +44,14 @@ export default function PlayerScreen({ navigation, route }: ScreenProps) {
 
   const [currentIndex, setCurrentIndex] = useState(startIndex);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isBuffering, setIsBuffering] = useState(false); // Will be updated by event listener
+  const [isBuffering, setIsBuffering] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
-  const [enrichedEpisode, setEnrichedEpisode] = useState<Episode | null>(null); // For cached metadata
+  const [enrichedEpisode, setEnrichedEpisode] = useState<Episode | null>(null);
 
-  // Use TrackPlayer's built-in progress hook
   const { position, duration } = useProgress();
 
   const current = enrichedEpisode || episodes[currentIndex] || {};
 
-  // Load cached metadata for current episode (for offline playback)
   useEffect(() => {
     const loadCachedMetadata = async () => {
       const baseEpisode = episodes[currentIndex];
@@ -82,14 +79,12 @@ export default function PlayerScreen({ navigation, route }: ScreenProps) {
         }
       }
 
-      // If no cached data, use base episode
       setEnrichedEpisode(baseEpisode);
     };
 
     loadCachedMetadata();
   }, [currentIndex, episodes]);
 
-  // Listen to playback state changes to sync UI with actual player state
   useTrackPlayerEvents(
     [
       Event.PlaybackState,
@@ -103,10 +98,8 @@ export default function PlayerScreen({ navigation, route }: ScreenProps) {
         const playing = state === State.Playing;
         setIsPlaying(playing);
         setIsBuffering(state === State.Buffering);
-        // Update Redux state
         dispatch(setPlaybackState(playing));
 
-        // If error state, log current track details
         if (state === State.Error) {
           const activeTrack = await TrackPlayer.getActiveTrack();
 
@@ -123,7 +116,6 @@ export default function PlayerScreen({ navigation, route }: ScreenProps) {
         const activeTrack = await TrackPlayer.getActiveTrack();
 
       } else if (event.type === Event.PlaybackActiveTrackChanged) {
-        // Handle track change from background controls
 
         try {
           const trackIndex = event.index;
@@ -139,7 +131,6 @@ export default function PlayerScreen({ navigation, route }: ScreenProps) {
     },
   );
 
-  // Check if current episode is liked
   useEffect(() => {
     const checkLikeStatus = async () => {
       if (!user?.id || !current) return;
@@ -152,7 +143,6 @@ export default function PlayerScreen({ navigation, route }: ScreenProps) {
           (item: LibraryItem) => item.episode_id === safeId,
         );
         setIsLiked(!!isFound);
-        // Update Redux state
         dispatch(setLikeStatus(!!isFound));
       } catch (e) {
 
@@ -161,7 +151,6 @@ export default function PlayerScreen({ navigation, route }: ScreenProps) {
     checkLikeStatus();
   }, [currentIndex, user?.id, dispatch]);
 
-  // Save to History when track changes or starts
   useEffect(() => {
     const saveToHistory = async () => {
       if (!user?.id || !current) return;
@@ -220,7 +209,6 @@ export default function PlayerScreen({ navigation, route }: ScreenProps) {
       try {
         const TP = TrackPlayer;
 
-        // First, try to setup player (safe)
         try {
           await TP.setupPlayer();
         } catch (setupError: unknown) {
@@ -229,12 +217,9 @@ export default function PlayerScreen({ navigation, route }: ScreenProps) {
           }
         }
 
-        //CHECK IF TRACK ALREADY PLAYING
-
         const activeTrack = await TrackPlayer.getActiveTrack();
         const currentMeta = episodes[startIndex];
 
-        // Extract episode ID from both URLs to compare (handles both local and online URLs)
         const getEpisodeId = (url: string) => {
           if (!url) return null;
 
@@ -246,7 +231,6 @@ export default function PlayerScreen({ navigation, route }: ScreenProps) {
         const activeEpisodeId = getEpisodeId(activeTrack?.url || '');
         const currentEpisodeId = getEpisodeId(currentMeta?.audioUrl || '');
 
-        // Check if same track is already playing by comparing episode IDs
         if (
           activeTrack &&
           currentMeta &&
@@ -254,15 +238,13 @@ export default function PlayerScreen({ navigation, route }: ScreenProps) {
           currentEpisodeId &&
           activeEpisodeId === currentEpisodeId
         ) {
-          // Just sync the local state with what's already playing
           const state = await TrackPlayer.getPlaybackState();
           setIsPlaying(state.state === State.Playing);
           setCurrentIndex(startIndex);
           dispatch(setPlaylist({ episodes, index: startIndex }));
-          return; // THIS PREVENTS RESTART
+          return;
         }
 
-        // Build track list
         let downloadedMap = new Map<string, string>();
         if (user?.id) {
           try {
@@ -288,15 +270,13 @@ export default function PlayerScreen({ navigation, route }: ScreenProps) {
             if (safeEpisodeId && downloadedMap.has(safeEpisodeId)) {
               audioSource = downloadedMap.get(safeEpisodeId) || null;
 
-
-              // Load cached metadata for offline playback
               try {
                 const cachedMetadata = await DownloadService.getEpisodeMetadata(
                   safeEpisodeId,
                 );
                 if (cachedMetadata) {
 
-                  episodeData = { ...ep, ...cachedMetadata }; // Merge cached data
+                  episodeData = { ...ep, ...cachedMetadata };
                 }
               } catch (e) {
 
@@ -336,9 +316,9 @@ export default function PlayerScreen({ navigation, route }: ScreenProps) {
     const onTrackChange = async () => {
       try {
         const TP = TrackPlayer;
-        // @ts-ignore
+
         if (TP.getCurrentTrack) {
-          // @ts-ignore
+
           const trackId = await TP.getCurrentTrack();
           if (trackId != null) setCurrentIndex(Number(trackId));
         }
@@ -364,7 +344,7 @@ export default function PlayerScreen({ navigation, route }: ScreenProps) {
 
         await TrackPlayer.play();
       }
-      // Note: isPlaying state will be updated by the event listener
+
     } catch (e) {
 
       Alert.alert('Playback Error', 'Unable to toggle playback');
@@ -374,13 +354,13 @@ export default function PlayerScreen({ navigation, route }: ScreenProps) {
   const next = async () => {
     try {
       const TP = TrackPlayer;
-      // @ts-ignore
+
       if (TP.skipToNext) {
-        // @ts-ignore
+
         await TP.skipToNext();
-        // @ts-ignore
+
         if (TP.getCurrentTrack) {
-          // @ts-ignore
+
           const id = await TP.getCurrentTrack();
           const newIndex = Number(id);
           setCurrentIndex(newIndex);
@@ -393,7 +373,6 @@ export default function PlayerScreen({ navigation, route }: ScreenProps) {
           });
         }
       } else {
-        // fallback: advance local index
         setCurrentIndex(prev => Math.min(prev + 1, episodes.length - 1));
       }
       if (TP.play) await TP.play();
@@ -406,13 +385,9 @@ export default function PlayerScreen({ navigation, route }: ScreenProps) {
   const previous = async () => {
     try {
       const TP = TrackPlayer;
-      // @ts-ignore
       if (TP.skipToPrevious) {
-        // @ts-ignore
         await TP.skipToPrevious();
-        // @ts-ignore
         if (TP.getCurrentTrack) {
-          // @ts-ignore
           const id = await TP.getCurrentTrack();
           const newIndex = Number(id);
           setCurrentIndex(newIndex);
@@ -425,7 +400,6 @@ export default function PlayerScreen({ navigation, route }: ScreenProps) {
           });
         }
       } else {
-        // fallback: decrement local index
         setCurrentIndex(prev => Math.max(prev - 1, 0));
       }
       if (TP.play) await TP.play();
@@ -447,7 +421,6 @@ export default function PlayerScreen({ navigation, route }: ScreenProps) {
   const seekForward10 = () => seekBy(10);
   const seekBack10 = () => seekBy(-10);
 
-  // Helper function to format time in MM:SS
   const formatTime = (seconds: number) => {
     if (!seconds || isNaN(seconds)) return '0:00';
     const mins = Math.floor(seconds / 60);
@@ -539,18 +512,18 @@ export default function PlayerScreen({ navigation, route }: ScreenProps) {
               }}
               minimumTrackTintColor="transparent"
               maximumTrackTintColor="transparent"
-              thumbTintColor="#A067FF"
+              thumbTintColor={COLORS.PRIMARY}
             />
           </View>
 
           {/* ===== Controls ===== */}
           <View style={styles.controls}>
             <TouchableOpacity onPress={previous}>
-              <Ionicons name="play-skip-back" size={30} color="#000" />
+              <Ionicons name="play-skip-back" size={30} color={COLORS.BLACK} />
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.smallBtn} onPress={seekBack10}>
-              <MaterialIcons name="replay-10" size={20} color="#000" />
+              <MaterialIcons name="replay-10" size={20} color={COLORS.BLACK} />
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -571,11 +544,11 @@ export default function PlayerScreen({ navigation, route }: ScreenProps) {
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.smallBtn} onPress={seekForward10}>
-              <MaterialIcons name="forward-10" size={20} color="#000" />
+              <MaterialIcons name="forward-10" size={20} color={COLORS.BLACK} />
             </TouchableOpacity>
 
             <TouchableOpacity onPress={next}>
-              <Ionicons name="play-skip-forward" size={30} color="#000" />
+              <Ionicons name="play-skip-forward" size={30} color={COLORS.BLACK} />
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -588,7 +561,7 @@ export default function PlayerScreen({ navigation, route }: ScreenProps) {
           <Ionicons
             name="chevron-up"
             size={20}
-            color="#fff"
+            color={COLORS.WHITE}
             style={{ marginBottom: -5 }}
           />
           <Text style={styles.moreText}>More</Text>
@@ -603,12 +576,12 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.WHITE,
   },
 
   scrollContent: {
     padding: 20,
-    paddingBottom: SCREEN_HEIGHT * 0.15, // 15% of screen height instead of fixed 100
+    paddingBottom: SCREEN_HEIGHT * 0.15,
   },
 
   header: {
@@ -634,16 +607,16 @@ const styles = StyleSheet.create({
 
   bookmarkIcon: {
     borderWidth: 1,
-    borderColor: '#DDDDDD',
+    borderColor: COLORS.LIGHT_GRAY,
     borderRadius: 20,
     padding: 5,
   },
 
   podcastImage: {
     width: '100%',
-    height: SCREEN_HEIGHT * 0.4, // 40% of screen height (responsive)
-    maxHeight: 400, // Maximum height cap
-    minHeight: 250, // Minimum height for very small screens
+    height: SCREEN_HEIGHT * 0.4,
+    maxHeight: 400,
+    minHeight: 250,
     borderRadius: 40,
     marginTop: 20,
   },
@@ -656,7 +629,7 @@ const styles = StyleSheet.create({
   },
 
   podcastTitle: {
-    fontSize: SCREEN_WIDTH < 360 ? 18 : 20, // Smaller font on small screens
+    fontSize: SCREEN_WIDTH < 360 ? 18 : 20,
     fontFamily: 'Inter-SemiBold',
     textAlign: 'center',
     marginTop: 5,
@@ -682,7 +655,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 5,
-    paddingHorizontal: 15, // Simplified - removed negative margins
+    paddingHorizontal: 15,
     marginTop: 10,
   },
 
@@ -762,7 +735,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderTopLeftRadius: 25,
     borderTopRightRadius: 25,
-    width: Math.min(157, SCREEN_WIDTH * 0.4), // Responsive width
+    width: Math.min(157, SCREEN_WIDTH * 0.4),
     alignItems: 'center',
     justifyContent: 'center',
     paddingBottom: 15,
@@ -770,7 +743,7 @@ const styles = StyleSheet.create({
 
   moreText: {
     textAlign: 'center',
-    color: '#fff',
+    color: COLORS.WHITE,
     fontSize: 15,
     fontFamily: 'Inter-Regular',
   },

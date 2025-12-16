@@ -78,7 +78,6 @@ export default function Search() {
     }, []),
   );
 
-  // Filter episodes when search query changes
   useEffect(() => {
     if (searchQuery.trim() === '') {
       setFilteredEpisodes(episodes);
@@ -88,7 +87,6 @@ export default function Search() {
       );
       setFilteredEpisodes(filtered);
     }
-    // Reset pagination when search changes
     setDisplayLimit(10);
   }, [searchQuery, episodes]);
 
@@ -99,7 +97,7 @@ export default function Search() {
       const downloadedIds = new Set(downloaded.map((d: DownloadedEpisode) => d.episode_id));
       setDownloadedEpisodes(downloadedIds);
     } catch (e) {
-      // Error loading downloaded episodes
+
     }
   };
 
@@ -125,17 +123,14 @@ export default function Search() {
     }
   };
 
-  // Memoized callback for playing episodes
   const handlePlay = useCallback(
     (index: number) => {
-      // Dispatch to Redux for mini player
       dispatch(setPlaylist({ episodes: filteredEpisodes, index }));
       navigation.navigate('Player', { episodes: filteredEpisodes, index });
     },
     [filteredEpisodes, navigation, dispatch],
   );
 
-  // Memoized render function
   const renderEpisode = useCallback(
     ({ item, index }: { item: Episode; index: number }) => {
       const episodeId = DatabaseService.getEpisodeIdFromUrl(
@@ -155,7 +150,6 @@ export default function Search() {
     [handlePlay, user, downloadedEpisodes],
   );
 
-  // Pull-to-refresh handler
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await Promise.all([fetchEpisodes(), loadDownloadedEpisodes()]);
@@ -166,7 +160,6 @@ export default function Search() {
     if (loadingMore || displayLimit >= filteredEpisodes.length) return;
 
     setLoadingMore(true);
-    // Simulate network delay for better UX
     setTimeout(() => {
       setDisplayLimit(prev => prev + 10);
       setLoadingMore(false);
@@ -190,7 +183,6 @@ export default function Search() {
 
   const renderHeader = () => (
     <>
-      {/* Only show category cards when NOT searching */}
       {searchQuery.trim() === '' && (
         <View style={styles.row}>
           {podcasts.map(item => (

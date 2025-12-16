@@ -8,10 +8,10 @@ const supabaseKey = SUPABASE_ANON_KEY;
 
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
-    persistSession: true, // Keep sessions persistent for better UX
+    persistSession: true,
     storage: AsyncStorage,
-    autoRefreshToken: true, // Auto-refresh tokens to maintain session
-    detectSessionInUrl: false, // Disable OAuth URL detection for React Native
-    storageKey: 'supabase.auth.token', // Explicit storage key
+    autoRefreshToken: true,
+    detectSessionInUrl: false,
+    storageKey: 'supabase.auth.token',
   },
 });

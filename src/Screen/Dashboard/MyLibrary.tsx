@@ -44,7 +44,6 @@ export default function MyLibrary() {
     try {
       setLoading(true);
 
-      // ALWAYS fetch downloaded IDs for checkmarks
       const downloads = await DownloadService.getDownloadedEpisodes(user.id);
       const downloadIds = new Set(downloads.map((d: DownloadedEpisode) => d.episode_id));
       setDownloadedEpisodeIds(downloadIds);
@@ -71,7 +70,6 @@ export default function MyLibrary() {
 
         const episodesWithDetails = await Promise.all(
           downloads.map(async (download: DownloadedEpisode) => {
-            // 1. Try from batch result
             if (episodesMap.has(download.episode_id)) {
               return {
                 ...download,
@@ -79,7 +77,6 @@ export default function MyLibrary() {
               };
             }
 
-            // 2. Fallback: use cached metadata when offline or not found in DB
             const cachedMeta = await DownloadService.getEpisodeMetadata(
               download.episode_id,
             );
@@ -97,7 +94,6 @@ export default function MyLibrary() {
 
         setDownloadedItems(episodesWithDetails);
       } else {
-        // Fetch liked items
         const data = await DatabaseService.getLibrary(user.id, 'liked');
         setLibraryItems(data || []);
       }
@@ -111,16 +107,13 @@ export default function MyLibrary() {
   };
 
   const handlePlay = (item: LibraryItem | DownloadedEpisode, index: number) => {
-    // Navigate to Player with the episode
     const episodes = activeTab === 'liked' ? libraryItems : downloadedItems;
     const mappedEpisodes: Episode[] = episodes.map((e: LibraryItem | DownloadedEpisode) => {
-      // For downloaded episodes, use local file path
       const audioUrl =
         activeTab === 'downloads' && (e as DownloadedEpisode).local_path
           ? (e as DownloadedEpisode).local_path
           : e.episode?.audio_url || '';
 
-      // Provide fallback image to prevent TrackPlayer error
       const imageUrl =
         e.episode?.image_url ||
         'https://via.placeholder.com/300x300.png?text=Podcast';
@@ -132,12 +125,9 @@ export default function MyLibrary() {
         image: imageUrl,
         pubDate: e.episode?.pub_date || '',
         description: e.episode?.description || '',
-        // Add required fields or fallbacks
         artist: e.episode?.artist || 'Unknown Artist',
       } as Episode;
     });
-
-    // Dispatch to Redux for mini player
     dispatch(setPlaylist({ episodes: mappedEpisodes, index }));
 
     navigation.navigate('Player', {
@@ -147,7 +137,7 @@ export default function MyLibrary() {
   };
 
   const onDownloadComplete = () => {
-    fetchLibrary(); // refresh list
+    fetchLibrary();
   };
 
   useFocusEffect(
@@ -162,7 +152,7 @@ export default function MyLibrary() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.WHITE }} edges={['top']}>
       <ScrollView
         style={styles.container}
         contentContainerStyle={{ paddingBottom: 60 }}
@@ -171,7 +161,7 @@ export default function MyLibrary() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        {/* TOP HEADER */}
+        {/*==== TOP HEADER ======*/}
         <View style={styles.header}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Ionicons name="mic-outline" size={24} color={COLORS.PRIMARY} />
@@ -179,7 +169,7 @@ export default function MyLibrary() {
           </View>
 
           <TouchableOpacity onPress={onRefresh} style={styles.headerIcon}>
-            <Ionicons name="refresh" size={22} color="#000" />
+            <Ionicons name="refresh" size={22} color={COLORS.BLACK} />
           </TouchableOpacity>
         </View>
 
@@ -250,8 +240,6 @@ export default function MyLibrary() {
                     item.episode?.audioUrl ||
                     item.audioUrl;
 
-                  // Check if downloaded using the safe ID derived from URL
-                  // This handles cases where Liked item has ID=URL but Download has ID=Filename
                   const safeId = DatabaseService.getEpisodeIdFromUrl(audioUrl);
                   const isDownloaded = downloadedEpisodeIds.has(safeId);
 
@@ -284,7 +272,7 @@ export default function MyLibrary() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', padding: 20 },
+  container: { flex: 1, backgroundColor: COLORS.WHITE, padding: 20 },
 
   header: {
     flexDirection: 'row',
@@ -297,7 +285,7 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 17,
     fontFamily: 'Inter-Bold',
-    color: '#000',
+    color: COLORS.BLACK,
   },
 
   headerIcon: {
@@ -305,7 +293,7 @@ const styles = StyleSheet.create({
     height: 35,
     borderRadius: 50,
     borderWidth: 1,
-    borderColor: '#DDDDDD',
+    borderColor: COLORS.LIGHT_GRAY,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -349,14 +337,12 @@ const styles = StyleSheet.create({
   podcastNumber: {
     fontSize: 18,
     fontWeight: '700',
-
-    // textAlign: "right",
     marginRight: 10,
   },
 
   podcastItem: {
     flexDirection: 'row',
-    backgroundColor: '#F9F9F9',
+    backgroundColor: COLORS.LIGHT_GRAY,
     padding: 0,
     borderRadius: 14,
     alignItems: 'center',
@@ -400,7 +386,7 @@ const styles = StyleSheet.create({
   },
 
   playBtnText: {
-    color: '#fff',
+    color: COLORS.WHITE,
     marginLeft: 5,
     fontWeight: '700',
   },

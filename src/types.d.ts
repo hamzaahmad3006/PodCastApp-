@@ -217,4 +217,4 @@ export interface RootState {
   notifications: NotificationState;
 }
 
-export type AppDispatch = unknown; // Will be properly typed by store
+export type AppDispatch = unknown; 

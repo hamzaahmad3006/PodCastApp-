@@ -7,7 +7,7 @@ export const COLORS = {
   // Primary Colors
   PRIMARY: '#A637FF',
   PRIMARY_LIGHT: '#F4E5FF',
-  LIGHT_PINK: '#FFB6C1',
+  LIGHT_PINK: '#E0B0FF',
   PRIMARY_THUMB: '#A067FF',
 
   // Neutral Colors
@@ -20,6 +20,7 @@ export const COLORS = {
   BORDER_GRAY: '#E0E0E0',
   DARK_GRAY: '#D3D3D3',
   BACKGROUND_LIGHT: '#F2F2F2',
+  PROFILE_CARD: '#4800E0',
 
   SUCCESS: '#4CAF50',
   ERROR: '#FF3B30',
