@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   FlatList,
   StyleSheet,
+  ActivityIndicator,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useAppSelector } from '../../redux/hooks';
@@ -14,6 +15,7 @@ import { DownloadService } from '../../services/DownloadService';
 import PodcastCard from '../../components/PodCastCard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Episode, MainStackParamList, DownloadedEpisode, ScreenProps } from '../../types';
+import { COLORS } from '../../constants/colors';
 
 export default function AllEpisodes({ navigation, route }: ScreenProps) {
   const { user } = useAppSelector(state => state.auth);
@@ -21,6 +23,9 @@ export default function AllEpisodes({ navigation, route }: ScreenProps) {
   const episodes: Episode[] = (params.episodes as Episode[]) || [];
 
   const nav = useNavigation<NavigationProp<MainStackParamList>>();
+
+  const [displayLimit, setDisplayLimit] = useState(10);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   // Download state
   const [downloadedEpisodes, setDownloadedEpisodes] = useState<Set<string>>(
@@ -87,6 +92,33 @@ export default function AllEpisodes({ navigation, route }: ScreenProps) {
     [],
   );
 
+  const handleLoadMore = () => {
+    if (loadingMore || displayLimit >= episodes.length) return;
+
+    setLoadingMore(true);
+    // Simulate network delay for better UX
+    setTimeout(() => {
+      setDisplayLimit(prev => prev + 10);
+      setLoadingMore(false);
+    }, 1000);
+  };
+
+  const renderFooter = () => {
+    if (displayLimit >= episodes.length) return null;
+
+    return (
+      <View style={{ alignItems: 'center', marginVertical: 20 }}>
+        {loadingMore ? (
+          <ActivityIndicator size="small" color={COLORS.PRIMARY} />
+        ) : (
+          <TouchableOpacity onPress={handleLoadMore} style={styles.loadMoreBtn}>
+            <Text style={styles.loadMoreText}>Load More</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  };
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top']}>
       <View style={styles.container}>
@@ -106,11 +138,12 @@ export default function AllEpisodes({ navigation, route }: ScreenProps) {
 
         {/* Episodes List */}
         <FlatList
-          data={episodes}
+          data={episodes.slice(0, displayLimit)}
           keyExtractor={(item, idx) => `${item.audioUrl || 'episode'}_${idx}`}
           renderItem={renderEpisode}
           contentContainerStyle={{ padding: 20, paddingTop: 10 }}
           showsVerticalScrollIndicator={false}
+          ListFooterComponent={renderFooter}
           // Performance optimizations
           getItemLayout={getItemLayout}
           removeClippedSubviews={true}
@@ -149,5 +182,19 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontFamily: 'Manrope-Bold',
+  },
+  loadMoreBtn: {
+    backgroundColor: COLORS.PRIMARY,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+  },
+  loadMoreText: {
+    color: '#fff',
+    fontSize: 14,
+    fontFamily: 'PublicSans-Bold',
   },
 });
