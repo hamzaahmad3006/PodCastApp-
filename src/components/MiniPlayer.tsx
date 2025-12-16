@@ -19,6 +19,7 @@ import {
   setLikeStatus,
   setDownloadStatus,
   setCurrentEpisode,
+  setCurrentIndex,
 } from '../redux/playerSlice';
 import { DatabaseService } from '../services/database';
 import { DownloadService } from '../services/DownloadService';
@@ -37,13 +38,19 @@ export default function MiniPlayer() {
     isDownloaded,
   } = useAppSelector(state => state.player);
 
-  // Listen to playback state changes from background controls
-  useTrackPlayerEvents([Event.PlaybackState], async event => {
-    if (event.type === Event.PlaybackState) {
-      const playing = event.state === State.Playing;
-      dispatch(setPlaybackState(playing));
-    }
-  });
+  useTrackPlayerEvents(
+    [Event.PlaybackState, Event.PlaybackActiveTrackChanged],
+    async event => {
+      if (event.type === Event.PlaybackState) {
+        const playing = event.state === State.Playing;
+        dispatch(setPlaybackState(playing));
+      } else if (event.type === Event.PlaybackActiveTrackChanged) {
+        if (event.index != null) {
+          dispatch(setCurrentIndex(event.index));
+        }
+      }
+    },
+  );
 
   // Check like and download status when episode changes
   useEffect(() => {
