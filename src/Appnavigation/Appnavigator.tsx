@@ -72,7 +72,7 @@ const getTabIcon = (
   return <Ionicons name={iconName} color={color} size={size} />;
 };
 
-// Only 4 tabs - no hidden screens
+
 const MyTabs: React.FC = () => (
   <Tab.Navigator
     screenOptions={({ route }) => ({
@@ -135,10 +135,8 @@ export default function AppNavigator() {
     <NavigationContainer ref={navigationRef}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {isAuthenticated ? (
-          // Authenticated users see Main Stack (Tabs + Player + AllEpisodes)
           <Stack.Screen name="Root" component={MainStackNavigator} />
         ) : (
-          // Auth Screens for unauthenticated users
           <>
             <Stack.Screen name="Register" component={Register} />
             <Stack.Screen name="Login" component={Login} />

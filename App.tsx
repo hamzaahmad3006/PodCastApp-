@@ -7,6 +7,9 @@ import { setLoggedOut } from "./src/redux/authSlice";
 import NotificationService from "./src/services/NotificationService";
 import { handleAuthSession } from "./src/utils/authHelpers";
 
+import { StatusBar } from "react-native";
+import { COLORS } from "./src/constants/colors";
+
 export default function App() {
   useEffect(() => {
     // Initialize Notifications
@@ -55,6 +58,7 @@ export default function App() {
 
   return (
     <Provider store={store}>
+      <StatusBar backgroundColor={COLORS.LIGHT_PINK} barStyle="dark-content" />
       <AppNavigator />
     </Provider>
   );

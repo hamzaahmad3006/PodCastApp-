@@ -11,7 +11,6 @@ type RssItem = {
     description?: string;
     pubDate?: string;
     enclosure?: { url?: string };
-    "enclosure"?: { url?: string };
     [key: string]: unknown;
 };
 

@@ -7,6 +7,7 @@ export const COLORS = {
   // Primary Colors
   PRIMARY: '#A637FF',
   PRIMARY_LIGHT: '#F4E5FF',
+  LIGHT_PINK: '#FFB6C1',
   PRIMARY_THUMB: '#A067FF',
 
   // Neutral Colors
@@ -20,13 +21,11 @@ export const COLORS = {
   DARK_GRAY: '#D3D3D3',
   BACKGROUND_LIGHT: '#F2F2F2',
 
-  // Status Colors
   SUCCESS: '#4CAF50',
   ERROR: '#FF3B30',
 
-  // Transparent
   TRANSPARENT: 'transparent',
 } as const;
 
-// Type for color keys (for TypeScript autocomplete)
+
 export type ColorKey = keyof typeof COLORS;
