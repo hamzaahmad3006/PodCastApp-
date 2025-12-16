@@ -1,11 +1,13 @@
-// Supabase Edge Function: Check for New Episodes and Send Push Notifications
-// This function runs on a schedule to check the RSS feed for new episodes
+
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-// @ts-ignore
-declare const Deno: any;
+declare const Deno: {
+    env: {
+        get(key: string): string | undefined
+    }
+}
 
 const RSS_URL = 'https://podcasts.files.bbci.co.uk/p01plr2p.rss'
 const ONESIGNAL_APP_ID = Deno.env.get('ONESIGNAL_APP_ID')!
