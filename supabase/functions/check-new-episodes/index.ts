@@ -50,12 +50,12 @@ async function fetchLatestEpisode(): Promise<Episode | null> {
             image: imageMatch ? imageMatch[1].trim() : 'https://via.placeholder.com/150',
             duration: durationMatch ? durationMatch[1].trim() : '0:00'
         }
-    }
     } catch (error: unknown) {
-    console.error('Error fetching RSS feed:', error)
-    return null
+        console.error('Error fetching RSS feed:', error)
+        return null
+    }
 }
-}
+
 
 // Send OneSignal notification
 async function sendPushNotification(episode: Episode): Promise<{ success: boolean; result: unknown }> {
